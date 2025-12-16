@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "./auth";
+
 const hasRole = (session, required) => {
   const roles = session?.user?.roles ?? [];
   return required.some((r) => roles.includes(r));
@@ -11,9 +12,10 @@ const protectedRoutes = [
   { path: "/viewer", roles: ["viewer", "editor", "admin"] },
 ];
 
-export default auth((req) => {
+export function middleware(req) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
+
   if (pathname.startsWith("/api/auth")) return NextResponse.next();
 
   const match = protectedRoutes.find((r) => pathname.startsWith(r.path));
@@ -31,7 +33,9 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
+
+export default auth(middleware);
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
