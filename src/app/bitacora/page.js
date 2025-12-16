@@ -1,5 +1,6 @@
 import BitacoraGroupedView from "@/components/BitacoraGroupedView";
 import { getBitacoraTableData } from "@/lib/bitacora";
+import { requireAuth } from "@/lib/auth";
 
 function todayStr() {
   const now = new Date();
@@ -12,6 +13,9 @@ function normalizeDate(val, fallback) {
 }
 
 export default async function Page(props) {
+  // Verificar autenticación
+  await requireAuth();
+
   const searchParams =
     props && props.searchParams ? await props.searchParams : {};
   const today = todayStr();

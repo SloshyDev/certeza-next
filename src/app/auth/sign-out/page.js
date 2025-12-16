@@ -1,9 +1,10 @@
 import { auth, signOut } from "@/../auth";
-import { redirect } from "next/navigation";
+import { requireAuth } from "@/lib/auth";
 
 export default async function SignOutPage() {
-  const session = await auth();
-  if (!session) redirect("/auth/sign-in");
+  // Verificar autenticación
+  const session = await requireAuth();
+  
   return (
     <div style={{ padding: 24 }}>
       <h2>Cerrar sesión</h2>
@@ -19,4 +20,3 @@ export default async function SignOutPage() {
     </div>
   );
 }
-

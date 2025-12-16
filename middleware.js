@@ -6,6 +6,7 @@ const hasRole = (session, required) => {
   return required.some((r) => roles.includes(r));
 };
 
+// Rutas que requieren roles específicos
 const protectedRoutes = [
   { path: "/admin", roles: ["admin"] },
   { path: "/editor", roles: ["editor", "admin"] },
@@ -14,23 +15,31 @@ const protectedRoutes = [
   { path: "/api/bitacora", roles: ["viewer", "editor", "admin"] },
 ];
 
+// Rutas que son públicas y no requieren autenticación
+const publicRoutes = ["/auth/sign-in"];
+
 export function middleware(req) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
 
-  if (pathname.startsWith("/api/auth")) return NextResponse.next();
+  // Siempre permitir acceso a las rutas de autenticación
+  if (pathname.startsWith("/api/auth") || publicRoutes.includes(pathname)) {
+    return NextResponse.next();
+  }
 
-  const match = protectedRoutes.find((r) => pathname.startsWith(r.path));
-  if (!match) return NextResponse.next();
-
+  // Verificar si el usuario está autenticado
   const isAuthed = !!req.auth;
+
+  // Si no está autenticado, redirigir al login
   if (!isAuthed) {
     const url = new URL("/auth/sign-in", req.url);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);
   }
 
-  if (!hasRole(req.auth, match.roles)) {
+  // Verificar permisos de roles para rutas protegidas
+  const match = protectedRoutes.find((r) => pathname.startsWith(r.path));
+  if (match && !hasRole(req.auth, match.roles)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
@@ -40,5 +49,6 @@ export function middleware(req) {
 export default auth(middleware);
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/auth).*)"],
+  // El matcher ahora protege todas las rutas excepto archivos estáticos y api/auth
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

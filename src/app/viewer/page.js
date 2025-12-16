@@ -1,4 +1,9 @@
-export default function ViewerPage() {
+import { requireAuth } from "@/lib/auth";
+
+export default async function ViewerPage() {
+  // Verificar autenticación
+  await requireAuth();
+
   return (
     <div className="py-6">
       <div className="surface p-6 sm:p-8">

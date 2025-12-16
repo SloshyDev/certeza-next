@@ -6,6 +6,6 @@ const HeatmapHoraLlegadaLazy = dynamic(
   { ssr: false }
 );
 
-export default function HeatmapLoader({ series, start, end }) {
-  return <HeatmapHoraLlegadaLazy series={series} start={start} end={end} />;
+export default function HeatmapLoader({ data, series, start, end }) {
+  return <HeatmapHoraLlegadaLazy series={series || data} start={start} end={end} />;
 }

@@ -1,7 +1,17 @@
 import { isDbConfigured } from "@/lib/db.js";
 import { searchBitacoraByIdOrAsunto } from "@/lib/bitacora.js";
+import { auth } from "@/../auth";
+import { hasRole } from "@/lib/roles.js";
 
 export async function GET(req) {
+  // Verificar autenticación
+  const session = await auth();
+  if (!session) return new Response("UNAUTHORIZED", { status: 401 });
+
+  // Verificar rol
+  if (!hasRole(session, ["viewer", "editor", "admin"]))
+    return new Response("FORBIDDEN", { status: 403 });
+
   if (!isDbConfigured()) return Response.json([], { status: 200 });
   const url = new URL(req.url);
   const idStr = url.searchParams.get("id") || "";
