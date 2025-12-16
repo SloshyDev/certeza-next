@@ -28,6 +28,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
     session: { strategy: "jwt" },
     secret: process.env.AUTH_SECRET,
     callbacks: {
+      async redirect({ url, baseUrl }) {
+        // Allow relative callback URLs
+        if (url.startsWith("/")) return `${baseUrl}${url}`;
+        // Allow callback URLs on the same origin
+        else if (new URL(url).origin === baseUrl) return url;
+        return baseUrl;
+      },
       async signIn({ account, profile }) {
         const email = profile?.email || account?.email || "";
         const domains = (

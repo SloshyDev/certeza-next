@@ -16,7 +16,7 @@ const protectedRoutes = [
 ];
 
 // Rutas que son públicas y no requieren autenticación
-const publicRoutes = ["/auth/sign-in"];
+const publicRoutes = ["/", "/auth/sign-in"];
 
 export function middleware(req) {
   const { nextUrl } = req;
