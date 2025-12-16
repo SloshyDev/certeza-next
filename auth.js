@@ -22,7 +22,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
             prompt: "select_account",
           },
         },
-        checks: ["state"],
+        checks: ["none"],
       }),
     ],
     session: { strategy: "jwt" },
