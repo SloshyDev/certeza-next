@@ -1,0 +1,1506 @@
+{
+  "tables": {
+    "advisor_commission_specifics": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "advisor_commission_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "payment_method",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "commission_percentage",
+          "data_type": "numeric",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "advisor_commissions": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "advisor_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "company_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "commission_percentage",
+          "data_type": "numeric",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "asesor": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "nombre",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "clave",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "correo",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "activo",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "bitacora": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "emisor",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "medio",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "asesor",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "asunto",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "dia_llegada",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "hora_llegada",
+          "data_type": "time without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_asignada",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "hora_asignado",
+          "data_type": "time without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_respondido",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "hora_respondido",
+          "data_type": "time without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "estatus",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_creacion",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "motivo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "actualizo",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "en_sicas",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "bitacora_historial": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "bitacora_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "estatus_anterior",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "estatus_nuevo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_respondido_anterior",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_respondido_nueva",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "hora_respondido_anterior",
+          "data_type": "time without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "hora_respondido_nueva",
+          "data_type": "time without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "motivo_anterior",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "motivo_nuevo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "actualizado_por",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_actualizacion",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "emisor_anterior",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "emisor_nuevo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "buzones_config": {
+      "columns": [
+        {
+          "column_name": "email",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "activo",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "companies": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "name",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "correos_no_leidos": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "message_id",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "de",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "asunto",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "buzon",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_recepcion",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "motivo_espera",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "user_esperado_id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "regla_especial",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "intentos",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "ultimo_intento",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "correos_pendientes": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "message_id",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "de",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "para",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "asunto",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "cuerpo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_recepcion",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "motivo_pendiente",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "buzon",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo_intento",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "clave_asesor",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "estado",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "correos_procesados": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "message_id",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "remitente",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "asunto",
+          "data_type": "text",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "user_asignado_id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "asignado",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "razon_no_asignacion",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_recibido",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "fecha_procesado",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "buzon",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "bitacora_id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "correos_rechazados": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "message_id",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "de",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "para",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "asunto",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "cuerpo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_recepcion",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_rechazo",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "motivo_rechazo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "buzon",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo_intento",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "clave_asesor",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "html_content",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "emisiones": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "bitacora_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "mesa",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_mesa",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "sicas",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_sicas",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "ingresos": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "fecha_ingreso",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "folio",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "asesor_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "poliza",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "compania",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "observacion",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "reingreso",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo_solicitud",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_mesa_vales",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "recibe",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo_ingreso_reingreso",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_reingreso",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_ingreso_digital",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_comercial",
+          "data_type": "date",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "ingresos_historial": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "bigint",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "ingreso_id",
+          "data_type": "bigint",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "fecha_cambio",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "usuario_cambio",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "operacion",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "fecha_ingreso_anterior",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_ingreso_digital_anterior",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_comercial_anterior",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "folio_anterior",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "asesor_id_anterior",
+          "data_type": "bigint",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "poliza_anterior",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "compania_anterior",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "observacion_anterior",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "reingreso_anterior",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo_solicitud_anterior",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_mesa_vales_anterior",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_reingreso_anterior",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "recibe_anterior",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo_ingreso_reingreso_anterior",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_ingreso_nuevo",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_ingreso_digital_nuevo",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_comercial_nuevo",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "folio_nuevo",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "asesor_id_nuevo",
+          "data_type": "bigint",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "poliza_nuevo",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "compania_nuevo",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "observacion_nuevo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "reingreso_nuevo",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo_solicitud_nuevo",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_mesa_vales_nuevo",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_reingreso_nuevo",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "recibe_nuevo",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo_ingreso_reingreso_nuevo",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "polizas": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "no_poliza",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_hasta",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "check_mesa",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "bitacora_id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "forma_pago",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_by",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "cia",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "no_vale",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "prima_total",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "prima_neta",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "estatus",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_actualizacion",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_vale_recibido",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_ingreso",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "folio",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "contador_cambios",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "commission_percentage",
+          "data_type": "numeric",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "asesor_id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_desde",
+          "data_type": "date",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "polizas_history": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "poliza_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "no_poliza",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "campo_modificado",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "valor_anterior",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "valor_nuevo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "usuario",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_modificacion",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "operacion",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "bitacora_id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "recibos": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "poliza_id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "no_recibo",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "estatus_pago",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "estatus_comision",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "prima_neta",
+          "data_type": "numeric",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "prima_total",
+          "data_type": "numeric",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "comision",
+          "data_type": "numeric",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_desde",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_hasta",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_pago",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "no_aviso",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "identificador",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "identificado_key",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "motivo",
+          "data_type": "text",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "recibos_view": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "poliza_id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "no_recibo",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "estatus_pago",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "estatus_comision",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "prima_neta",
+          "data_type": "numeric",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "prima_total",
+          "data_type": "numeric",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "comision",
+          "data_type": "numeric",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_desde",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "f_hasta",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "fecha_pago",
+          "data_type": "date",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "no_aviso",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "dias_atraso",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "reglas_asignacion": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "nombre",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "patron",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "user_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "prioridad",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "activa",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "reglas_asunto": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "nombre",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "patron",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "descripcion",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "activa",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "requiere_clave",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "tipo_regla",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "renovaciones": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "poliza",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "mes",
+          "data_type": "character varying",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "asesor_id",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "estatus",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "roles": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "name",
+          "data_type": "text",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "description",
+          "data_type": "text",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "user_roles": {
+      "columns": [
+        {
+          "column_name": "user_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "role_id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        }
+      ]
+    },
+    "users": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "emisor",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "mail",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "status",
+          "data_type": "boolean",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "correos_asignados",
+          "data_type": "integer",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "buzones_permitidos",
+          "data_type": "ARRAY",
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    "users_auth": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "name",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "email",
+          "data_type": "text",
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "external_id",
+          "data_type": "text",
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp with time zone",
+          "is_nullable": "YES"
+        }
+      ]
+    }
+  },
+  "relationships": [
+    {
+      "src_table": "advisor_commission_specifics",
+      "src_column": "advisor_commission_id",
+      "target_table": "advisor_commissions",
+      "target_column": "id"
+    },
+    {
+      "src_table": "advisor_commissions",
+      "src_column": "company_id",
+      "target_table": "companies",
+      "target_column": "id"
+    },
+    {
+      "src_table": "advisor_commissions",
+      "src_column": "advisor_id",
+      "target_table": "asesor",
+      "target_column": "id"
+    },
+    {
+      "src_table": "bitacora",
+      "src_column": "asesor",
+      "target_table": "asesor",
+      "target_column": "id"
+    },
+    {
+      "src_table": "bitacora_historial",
+      "src_column": "bitacora_id",
+      "target_table": "bitacora",
+      "target_column": "id"
+    },
+    {
+      "src_table": "correos_procesados",
+      "src_column": "user_asignado_id",
+      "target_table": "users",
+      "target_column": "id"
+    },
+    {
+      "src_table": "emisiones",
+      "src_column": "bitacora_id",
+      "target_table": "bitacora",
+      "target_column": "id"
+    },
+    {
+      "src_table": "ingresos",
+      "src_column": "asesor_id",
+      "target_table": "asesor",
+      "target_column": "id"
+    },
+    {
+      "src_table": "ingresos_historial",
+      "src_column": "ingreso_id",
+      "target_table": "ingresos",
+      "target_column": "id"
+    },
+    {
+      "src_table": "polizas",
+      "src_column": "asesor_id",
+      "target_table": "asesor",
+      "target_column": "id"
+    },
+    {
+      "src_table": "polizas",
+      "src_column": "bitacora_id",
+      "target_table": "bitacora",
+      "target_column": "id"
+    },
+    {
+      "src_table": "reglas_asignacion",
+      "src_column": "user_id",
+      "target_table": "users",
+      "target_column": "id"
+    },
+    {
+      "src_table": "renovaciones",
+      "src_column": "asesor_id",
+      "target_table": "asesor",
+      "target_column": "id"
+    },
+    {
+      "src_table": "user_roles",
+      "src_column": "user_id",
+      "target_table": "users_auth",
+      "target_column": "id"
+    },
+    {
+      "src_table": "user_roles",
+      "src_column": "role_id",
+      "target_table": "roles",
+      "target_column": "id"
+    }
+  ]
+}

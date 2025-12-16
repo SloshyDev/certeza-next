@@ -1,0 +1,328 @@
+erDiagram
+  advisor_commission_specifics {
+    integer id PK/FK?
+    integer advisor_commission_id PK/FK?
+    character varying payment_method PK/FK?
+    numeric commission_percentage PK/FK?
+    timestamp without time zone created_at 
+  }
+  advisor_commissions {
+    integer id PK/FK?
+    integer advisor_id PK/FK?
+    integer company_id PK/FK?
+    numeric commission_percentage PK/FK?
+    timestamp without time zone created_at 
+    timestamp without time zone updated_at 
+  }
+  asesor {
+    integer id PK/FK?
+    character varying nombre PK/FK?
+    character varying clave PK/FK?
+    character varying correo 
+    timestamp without time zone created_at 
+    boolean activo 
+  }
+  bitacora {
+    integer id PK/FK?
+    character varying emisor 
+    character varying medio 
+    character varying tipo 
+    integer asesor 
+    character varying asunto 
+    date dia_llegada 
+    time without time zone hora_llegada 
+    date fecha_asignada 
+    time without time zone hora_asignado 
+    date fecha_respondido 
+    time without time zone hora_respondido 
+    text estatus 
+    timestamp without time zone fecha_creacion 
+    text motivo 
+    character varying actualizo 
+    boolean en_sicas 
+  }
+  bitacora_historial {
+    integer id PK/FK?
+    integer bitacora_id PK/FK?
+    text estatus_anterior 
+    text estatus_nuevo 
+    date fecha_respondido_anterior 
+    date fecha_respondido_nueva 
+    time without time zone hora_respondido_anterior 
+    time without time zone hora_respondido_nueva 
+    text motivo_anterior 
+    text motivo_nuevo 
+    character varying actualizado_por 
+    timestamp without time zone fecha_actualizacion 
+    text emisor_anterior 
+    text emisor_nuevo 
+  }
+  buzones_config {
+    character varying email PK/FK?
+    boolean activo 
+    timestamp without time zone created_at 
+    timestamp without time zone updated_at 
+  }
+  companies {
+    integer id PK/FK?
+    character varying name PK/FK?
+    timestamp without time zone created_at 
+  }
+  correos_no_leidos {
+    integer id PK/FK?
+    character varying message_id PK/FK?
+    character varying de PK/FK?
+    character varying asunto 
+    character varying buzon 
+    timestamp without time zone fecha_recepcion 
+    text motivo_espera 
+    integer user_esperado_id 
+    character varying regla_especial 
+    integer intentos 
+    timestamp without time zone ultimo_intento 
+    timestamp without time zone created_at 
+  }
+  correos_pendientes {
+    integer id PK/FK?
+    character varying message_id PK/FK?
+    character varying de PK/FK?
+    character varying para PK/FK?
+    character varying asunto 
+    text cuerpo 
+    timestamp without time zone fecha_recepcion 
+    text motivo_pendiente 
+    character varying buzon 
+    character varying tipo_intento 
+    character varying clave_asesor 
+    character varying estado 
+    timestamp without time zone created_at 
+  }
+  correos_procesados {
+    integer id PK/FK?
+    character varying message_id PK/FK?
+    character varying remitente PK/FK?
+    text asunto PK/FK?
+    integer user_asignado_id 
+    boolean asignado 
+    text razon_no_asignacion 
+    timestamp without time zone fecha_recibido PK/FK?
+    timestamp without time zone fecha_procesado 
+    character varying buzon 
+    integer bitacora_id 
+  }
+  correos_rechazados {
+    integer id PK/FK?
+    character varying message_id PK/FK?
+    character varying de PK/FK?
+    character varying para PK/FK?
+    character varying asunto 
+    text cuerpo 
+    timestamp without time zone fecha_recepcion 
+    timestamp without time zone fecha_rechazo 
+    text motivo_rechazo 
+    character varying buzon 
+    character varying tipo_intento 
+    character varying clave_asesor 
+    text html_content 
+    timestamp without time zone created_at 
+  }
+  emisiones {
+    integer id PK/FK?
+    integer bitacora_id PK/FK?
+    boolean mesa 
+    timestamp without time zone fecha_mesa 
+    boolean sicas 
+    timestamp without time zone fecha_sicas 
+    timestamp without time zone created_at 
+    timestamp without time zone updated_at 
+  }
+  ingresos {
+    integer id PK/FK?
+    date fecha_ingreso 
+    character varying folio PK/FK?
+    integer asesor_id PK/FK?
+    character varying poliza PK/FK?
+    character varying compania 
+    text observacion 
+    boolean reingreso 
+    character varying tipo_solicitud 
+    date fecha_mesa_vales 
+    character varying recibe 
+    character varying tipo_ingreso_reingreso 
+    date fecha_reingreso 
+    date fecha_ingreso_digital 
+    date fecha_comercial 
+  }
+  ingresos_historial {
+    bigint id PK/FK?
+    bigint ingreso_id PK/FK?
+    timestamp without time zone fecha_cambio 
+    text usuario_cambio 
+    character varying operacion PK/FK?
+    date fecha_ingreso_anterior 
+    date fecha_ingreso_digital_anterior 
+    date fecha_comercial_anterior 
+    character varying folio_anterior 
+    bigint asesor_id_anterior 
+    character varying poliza_anterior 
+    character varying compania_anterior 
+    text observacion_anterior 
+    boolean reingreso_anterior 
+    character varying tipo_solicitud_anterior 
+    date fecha_mesa_vales_anterior 
+    date fecha_reingreso_anterior 
+    character varying recibe_anterior 
+    character varying tipo_ingreso_reingreso_anterior 
+    date fecha_ingreso_nuevo 
+    date fecha_ingreso_digital_nuevo 
+    date fecha_comercial_nuevo 
+    character varying folio_nuevo 
+    bigint asesor_id_nuevo 
+    character varying poliza_nuevo 
+    character varying compania_nuevo 
+    text observacion_nuevo 
+    boolean reingreso_nuevo 
+    character varying tipo_solicitud_nuevo 
+    date fecha_mesa_vales_nuevo 
+    date fecha_reingreso_nuevo 
+    character varying recibe_nuevo 
+    character varying tipo_ingreso_reingreso_nuevo 
+  }
+  polizas {
+    integer id PK/FK?
+    character varying no_poliza PK/FK?
+    timestamp without time zone created_at 
+    date f_hasta 
+    boolean check_mesa 
+    integer bitacora_id 
+    text forma_pago 
+    text created_by 
+    character varying cia 
+    text no_vale 
+    text prima_total 
+    text prima_neta 
+    text estatus 
+    date f_actualizacion 
+    date f_vale_recibido 
+    date f_ingreso 
+    text folio 
+    integer contador_cambios 
+    numeric commission_percentage 
+    integer asesor_id 
+    date f_desde 
+  }
+  polizas_history {
+    integer id PK/FK?
+    integer poliza_id PK/FK?
+    character varying no_poliza 
+    character varying campo_modificado PK/FK?
+    text valor_anterior 
+    text valor_nuevo 
+    character varying usuario 
+    timestamp without time zone fecha_modificacion 
+    character varying operacion PK/FK?
+    integer bitacora_id 
+    timestamp without time zone created_at 
+  }
+  recibos {
+    integer id PK/FK?
+    integer poliza_id 
+    integer no_recibo PK/FK?
+    character varying estatus_pago 
+    character varying estatus_comision 
+    numeric prima_neta 
+    numeric prima_total 
+    numeric comision 
+    date f_desde 
+    date f_hasta 
+    date f_pago 
+    character varying no_aviso 
+    timestamp without time zone created_at 
+    text identificador 
+    text identificado_key 
+    text motivo 
+  }
+  recibos_view {
+    integer id 
+    integer poliza_id 
+    integer no_recibo 
+    character varying estatus_pago 
+    character varying estatus_comision 
+    numeric prima_neta 
+    numeric prima_total 
+    numeric comision 
+    date f_desde 
+    date f_hasta 
+    date fecha_pago 
+    character varying no_aviso 
+    timestamp without time zone created_at 
+    integer dias_atraso 
+  }
+  reglas_asignacion {
+    integer id PK/FK?
+    character varying nombre PK/FK?
+    character varying patron PK/FK?
+    integer user_id PK/FK?
+    integer prioridad 
+    boolean activa 
+    timestamp without time zone created_at 
+  }
+  reglas_asunto {
+    integer id PK/FK?
+    character varying nombre PK/FK?
+    character varying patron PK/FK?
+    text descripcion 
+    boolean activa 
+    boolean requiere_clave 
+    character varying tipo_regla 
+    timestamp without time zone created_at 
+  }
+  renovaciones {
+    integer id PK/FK?
+    character varying poliza PK/FK?
+    character varying mes PK/FK?
+    integer asesor_id 
+    timestamp without time zone created_at 
+    character varying estatus 
+  }
+  roles {
+    integer id PK/FK?
+    text name PK/FK?
+    text description 
+  }
+  user_roles {
+    integer user_id PK/FK?
+    integer role_id PK/FK?
+  }
+  users {
+    integer id PK/FK?
+    text emisor 
+    text mail 
+    boolean status 
+    timestamp without time zone created_at 
+    timestamp without time zone updated_at 
+    integer correos_asignados 
+    ARRAY buzones_permitidos 
+  }
+  users_auth {
+    integer id PK/FK?
+    text name 
+    text email PK/FK?
+    text external_id 
+    timestamp with time zone created_at 
+  }
+  advisor_commissions ||--o{ advisor_commission_specifics : "id -> advisor_commission_id"
+  companies ||--o{ advisor_commissions : "id -> company_id"
+  asesor ||--o{ advisor_commissions : "id -> advisor_id"
+  asesor ||--o{ bitacora : "id -> asesor"
+  bitacora ||--o{ bitacora_historial : "id -> bitacora_id"
+  users ||--o{ correos_procesados : "id -> user_asignado_id"
+  bitacora ||--o{ emisiones : "id -> bitacora_id"
+  asesor ||--o{ ingresos : "id -> asesor_id"
+  ingresos ||--o{ ingresos_historial : "id -> ingreso_id"
+  asesor ||--o{ polizas : "id -> asesor_id"
+  bitacora ||--o{ polizas : "id -> bitacora_id"
+  users ||--o{ reglas_asignacion : "id -> user_id"
+  asesor ||--o{ renovaciones : "id -> asesor_id"
+  users_auth ||--o{ user_roles : "id -> user_id"
+  roles ||--o{ user_roles : "id -> role_id"

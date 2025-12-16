@@ -1,0 +1,14 @@
+import { isDbConfigured } from "@/lib/db.js";
+import { searchBitacoraByIdOrAsunto } from "@/lib/bitacora.js";
+
+export async function GET(req) {
+  if (!isDbConfigured()) return Response.json([], { status: 200 });
+  const url = new URL(req.url);
+  const idStr = url.searchParams.get("id") || "";
+  const asuntoStr = url.searchParams.get("asunto") || "";
+  const id = /^[0-9]+$/.test(idStr) ? Number(idStr) : null;
+  const asunto = asuntoStr.trim() !== "" ? asuntoStr.trim() : null;
+  if (id == null && asunto == null) return Response.json([], { status: 200 });
+  const rows = await searchBitacoraByIdOrAsunto(id, asunto);
+  return Response.json(rows);
+}

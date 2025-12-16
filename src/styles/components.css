@@ -1,0 +1,15 @@
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center h-10 px-4 rounded-full border border-transparent font-medium transition-colors duration-200 ease-soft;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-background hover:bg-foreground hover:text-background;
+  }
+  .btn-secondary {
+    @apply btn border-border hover:bg-muted/10;
+  }
+  .logo-invert-dark {
+    @apply dark:invert;
+  }
+}
+

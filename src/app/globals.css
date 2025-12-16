@@ -1,42 +1,165 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111111;
+  --primary: #621334; /* color institucional */
+  --secondary: #1f2937; /* gray-800 */
+  --muted: #6b7280; /* gray-500 */
+  --accent: #621334; /* usar institucional como acento */
+  --border: #e5e7eb; /* gray-200 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.dark {
+  --background: #000000;
+  --foreground: #e6e6e6;
+  --primary: #621334; /* mantener institucional en oscuro */
+  --secondary: #c7c7c7; /* gray-300 aprox */
+  --muted: #a3a3a3; /* gray-400/500 aprox */
+  --accent: #621334;
+  --border: #1f2937; /* gray-800 como borde en oscuro */
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  html,
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  a {
+    @apply text-inherit no-underline;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1 {
+    @apply text-3xl md:text-4xl font-semibold tracking-tight text-inherit;
+  }
+  p {
+    @apply text-base leading-7 text-inherit;
   }
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
+@layer components {
+  .container-responsive {
+    @apply container max-w-screen-4xl;
+  }
+  .surface {
+    @apply bg-foreground text-background rounded-xl border border-border shadow-sm;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center h-10 px-4 rounded-full border border-transparent font-medium transition-colors duration-200 ease-soft focus-visible:outline-2 focus-visible:outline-primary;
+  }
+  .btn-primary {
+    @apply btn bg-primary text-background hover:bg-foreground hover:text-background;
+  }
+  .btn-secondary {
+    @apply btn border-border hover:bg-black/5 dark:hover:bg-white/10;
+  }
+  .btn-accent {
+    @apply btn border-accent text-accent hover:bg-accent hover:text-background;
+  }
+  .logo-invert-dark {
+    @apply dark:invert;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-3 h-8 text-sm font-medium border border-transparent;
+  }
+  .badge-cotizacion {
+    @apply badge bg-cotizacion text-white;
+  }
+  .badge-emision {
+    @apply badge bg-emision text-black;
+  }
+  .badge-cancelacion {
+    @apply badge bg-cancelacion text-black;
+  }
+  .badge-reexpedicion {
+    @apply badge bg-reexpedicion text-white;
+  }
+  .badge-endoso {
+    @apply badge bg-endoso text-white;
+  }
+
+  .surface-type {
+    @apply relative overflow-hidden;
+  }
+  .surface-type::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 4px;
+    border-top-left-radius: 0.75rem;
+    border-top-right-radius: 0.75rem;
+  }
+  .surface-cotizacion {
+    @apply border-cotizacion ring-1 ring-cotizacion/20;
+  }
+  .surface-emision {
+    @apply border-emision ring-1 ring-emision/20;
+  }
+  .surface-cancelacion {
+    @apply border-cancelacion ring-1 ring-cancelacion/20;
+  }
+  .surface-reexpedicion {
+    @apply border-reexpedicion ring-1 ring-reexpedicion/20;
+  }
+  .surface-endoso {
+    @apply border-endoso ring-1 ring-endoso/20;
+  }
+  .surface-cotizacion::before { background-color: #3892ff; }
+  .surface-emision::before { background-color: #04e995; }
+  .surface-cancelacion::before { background-color: #fbbf24; }
+  .surface-reexpedicion::before { background-color: #f87171; }
+  .surface-endoso::before { background-color: #c27aff; }
+
+  .surface[data-type="COTIZACION"] { @apply border-cotizacion ring-1 ring-cotizacion/20; }
+  .surface[data-type="EMISION"] { @apply border-emision ring-1 ring-emision/20; }
+  .surface[data-type="CANCELACION"] { @apply border-cancelacion ring-1 ring-cancelacion/20; }
+  .surface[data-type="REEXPEDICON"] { @apply border-reexpedicion ring-1 ring-reexpedicion/20; }
+  .surface[data-type="REEXPEDICION"] { @apply border-reexpedicion ring-1 ring-reexpedicion/20; }
+  .surface[data-type="COTIZACION"] { background-color: #3892ff; color: #ffffff; border-color: transparent; }
+  .surface[data-type="EMISION"] { background-color: #04e995; color: #0a0a0a; border-color: transparent; }
+  .surface[data-type="CANCELACION"] { background-color: #fbbf24; color: #0a0a0a; border-color: transparent; }
+  .surface[data-type="REEXPEDICON"] { background-color: #f87171; color: #ffffff; border-color: transparent; }
+  .surface[data-type="REEXPEDICION"] { background-color: #f87171; color: #ffffff; border-color: transparent; }
+  .surface[data-type="ENDOSO"] { background-color: #c27aff; color: #ffffff; border-color: transparent; }
+  .surface[data-type="COTIZACION"]::before { background-color: #3892ff; }
+  .surface[data-type="EMISION"]::before { background-color: #04e995; }
+  .surface[data-type="CANCELACION"]::before { background-color: #fbbf24; }
+  .surface[data-type="REEXPEDICON"]::before { background-color: #f87171; }
+  .surface[data-type="REEXPEDICION"]::before { background-color: #f87171; }
+  .surface[data-type="ENDOSO"]::before { background-color: #c27aff; }
+
+  .dark .surface[data-type="COTIZACION"] { background-color: rgba(56, 146, 255, 0.15); color: #ffffff; border-color: #3892ff; }
+  .dark .surface[data-type="EMISION"] { background-color: rgba(4, 233, 149, 0.15); color: #ffffff; border-color: #04e995; }
+  .dark .surface[data-type="CANCELACION"] { background-color: rgba(251, 191, 36, 0.15); color: #ffffff; border-color: #fbbf24; }
+  .dark .surface[data-type="REEXPEDICON"],
+  .dark .surface[data-type="REEXPEDICION"] { background-color: rgba(248, 113, 113, 0.15); color: #ffffff; border-color: #f87171; }
+  .dark .surface[data-type="ENDOSO"] { background-color: rgba(194, 122, 255, 0.15); color: #ffffff; border-color: #c27aff; }
+
+  .link {
+    @apply underline underline-offset-4 decoration-primary hover:opacity-80;
+  }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
 }
