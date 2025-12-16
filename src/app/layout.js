@@ -3,10 +3,9 @@ import "./globals.css";
 import ThemeToggle from "../components/ui/ThemeToggle";
 import {
   Cog6ToothIcon,
-  PencilSquareIcon,
-  EyeIcon,
   ArrowRightStartOnRectangleIcon,
   Bars3Icon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/20/solid";
 import Logo from "../components/ui/Logo";
 import Link from "next/link";
@@ -55,26 +54,19 @@ export default async function RootLayout({ children }) {
               {session ? (
                 <>
                   <div className="hidden sm:flex items-center gap-2">
+                    <Link href="/bitacora" className="btn-secondary gap-2">
+                      <ClipboardDocumentListIcon
+                        className="h-4 w-4 text-foreground"
+                        aria-hidden="true"
+                      />
+                      Bitácora
+                    </Link>
                     <Link href="/admin" className="btn-secondary gap-2">
                       <Cog6ToothIcon
                         className="h-4 w-4 text-foreground"
                         aria-hidden="true"
                       />
                       Admin
-                    </Link>
-                    <Link href="/editor" className="btn-secondary gap-2">
-                      <PencilSquareIcon
-                        className="h-4 w-4 text-foreground"
-                        aria-hidden="true"
-                      />
-                      Editor
-                    </Link>
-                    <Link href="/viewer" className="btn-secondary gap-2">
-                      <EyeIcon
-                        className="h-4 w-4 text-foreground"
-                        aria-hidden="true"
-                      />
-                      Viewer
                     </Link>
                     <form action={signOutAction}>
                       <button className="btn-secondary gap-2">
@@ -97,34 +89,24 @@ export default async function RootLayout({ children }) {
                     <div className="absolute right-0 mt-2 w-40 rounded-lg border border-border bg-background shadow-md">
                       <div className="flex flex-col p-2">
                         <Link
-                          href="/admin"
+                          href="/bitacora"
                           className="btn-secondary w-full gap-2"
+                        >
+                          <ClipboardDocumentListIcon
+                            className="h-4 w-4 text-foreground"
+                            aria-hidden="true"
+                          />
+                          Bitácora
+                        </Link>
+                        <Link
+                          href="/admin"
+                          className="btn-secondary w-full mt-2 gap-2"
                         >
                           <Cog6ToothIcon
                             className="h-4 w-4 text-foreground"
                             aria-hidden="true"
                           />
                           Admin
-                        </Link>
-                        <Link
-                          href="/editor"
-                          className="btn-secondary w-full mt-2 gap-2"
-                        >
-                          <PencilSquareIcon
-                            className="h-4 w-4 text-foreground"
-                            aria-hidden="true"
-                          />
-                          Editor
-                        </Link>
-                        <Link
-                          href="/viewer"
-                          className="btn-secondary w-full mt-2 gap-2"
-                        >
-                          <EyeIcon
-                            className="h-4 w-4 text-foreground"
-                            aria-hidden="true"
-                          />
-                          Viewer
                         </Link>
                         <form action={signOutAction} className="mt-2">
                           <button className="btn-secondary w-full gap-2">
