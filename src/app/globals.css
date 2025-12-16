@@ -128,30 +128,30 @@
   .surface-reexpedicion::before { background-color: #f87171; }
   .surface-endoso::before { background-color: #c27aff; }
 
-  .surface[data-type="COTIZACION"] { @apply border-cotizacion ring-1 ring-cotizacion/20; }
-  .surface[data-type="EMISION"] { @apply border-emision ring-1 ring-emision/20; }
-  .surface[data-type="CANCELACION"] { @apply border-cancelacion ring-1 ring-cancelacion/20; }
-  .surface[data-type="REEXPEDICON"] { @apply border-reexpedicion ring-1 ring-reexpedicion/20; }
-  .surface[data-type="REEXPEDICION"] { @apply border-reexpedicion ring-1 ring-reexpedicion/20; }
-  .surface[data-type="COTIZACION"] { background-color: #3892ff; color: #ffffff; border-color: transparent; }
-  .surface[data-type="EMISION"] { background-color: #04e995; color: #0a0a0a; border-color: transparent; }
-  .surface[data-type="CANCELACION"] { background-color: #fbbf24; color: #0a0a0a; border-color: transparent; }
-  .surface[data-type="REEXPEDICON"] { background-color: #f87171; color: #ffffff; border-color: transparent; }
-  .surface[data-type="REEXPEDICION"] { background-color: #f87171; color: #ffffff; border-color: transparent; }
-  .surface[data-type="ENDOSO"] { background-color: #c27aff; color: #ffffff; border-color: transparent; }
-  .surface[data-type="COTIZACION"]::before { background-color: #3892ff; }
-  .surface[data-type="EMISION"]::before { background-color: #04e995; }
-  .surface[data-type="CANCELACION"]::before { background-color: #fbbf24; }
-  .surface[data-type="REEXPEDICON"]::before { background-color: #f87171; }
-  .surface[data-type="REEXPEDICION"]::before { background-color: #f87171; }
-  .surface[data-type="ENDOSO"]::before { background-color: #c27aff; }
+  .surface[data-selected="true"][data-type="COTIZACION"] { @apply border-cotizacion ring-1 ring-cotizacion/20; }
+  .surface[data-selected="true"][data-type="EMISION"] { @apply border-emision ring-1 ring-emision/20; }
+  .surface[data-selected="true"][data-type="CANCELACION"] { @apply border-cancelacion ring-1 ring-cancelacion/20; }
+  .surface[data-selected="true"][data-type="REEXPEDICON"] { @apply border-reexpedicion ring-1 ring-reexpedicion/20; }
+  .surface[data-selected="true"][data-type="REEXPEDICION"] { @apply border-reexpedicion ring-1 ring-reexpedicion/20; }
+  .surface[data-selected="true"][data-type="COTIZACION"] { background-color: #3892ff; color: #ffffff; border-color: transparent; }
+  .surface[data-selected="true"][data-type="EMISION"] { background-color: #04e995; color: #0a0a0a; border-color: transparent; }
+  .surface[data-selected="true"][data-type="CANCELACION"] { background-color: #fbbf24; color: #0a0a0a; border-color: transparent; }
+  .surface[data-selected="true"][data-type="REEXPEDICON"] { background-color: #f87171; color: #ffffff; border-color: transparent; }
+  .surface[data-selected="true"][data-type="REEXPEDICION"] { background-color: #f87171; color: #ffffff; border-color: transparent; }
+  .surface[data-selected="true"][data-type="ENDOSO"] { background-color: #c27aff; color: #ffffff; border-color: transparent; }
+  .surface[data-selected="true"][data-type="COTIZACION"]::before { background-color: #3892ff; }
+  .surface[data-selected="true"][data-type="EMISION"]::before { background-color: #04e995; }
+  .surface[data-selected="true"][data-type="CANCELACION"]::before { background-color: #fbbf24; }
+  .surface[data-selected="true"][data-type="REEXPEDICON"]::before { background-color: #f87171; }
+  .surface[data-selected="true"][data-type="REEXPEDICION"]::before { background-color: #f87171; }
+  .surface[data-selected="true"][data-type="ENDOSO"]::before { background-color: #c27aff; }
 
-  .dark .surface[data-type="COTIZACION"] { background-color: rgba(56, 146, 255, 0.15); color: #ffffff; border-color: #3892ff; }
-  .dark .surface[data-type="EMISION"] { background-color: rgba(4, 233, 149, 0.15); color: #ffffff; border-color: #04e995; }
-  .dark .surface[data-type="CANCELACION"] { background-color: rgba(251, 191, 36, 0.15); color: #ffffff; border-color: #fbbf24; }
-  .dark .surface[data-type="REEXPEDICON"],
-  .dark .surface[data-type="REEXPEDICION"] { background-color: rgba(248, 113, 113, 0.15); color: #ffffff; border-color: #f87171; }
-  .dark .surface[data-type="ENDOSO"] { background-color: rgba(194, 122, 255, 0.15); color: #ffffff; border-color: #c27aff; }
+  .dark .surface[data-selected="true"][data-type="COTIZACION"] { background-color: rgba(56, 146, 255, 0.15); color: #ffffff; border-color: #3892ff; }
+  .dark .surface[data-selected="true"][data-type="EMISION"] { background-color: rgba(4, 233, 149, 0.15); color: #ffffff; border-color: #04e995; }
+  .dark .surface[data-selected="true"][data-type="CANCELACION"] { background-color: rgba(251, 191, 36, 0.15); color: #ffffff; border-color: #fbbf24; }
+  .dark .surface[data-selected="true"][data-type="REEXPEDICON"],
+  .dark .surface[data-selected="true"][data-type="REEXPEDICION"] { background-color: rgba(248, 113, 113, 0.15); color: #ffffff; border-color: #f87171; }
+  .dark .surface[data-selected="true"][data-type="ENDOSO"] { background-color: rgba(194, 122, 255, 0.15); color: #ffffff; border-color: #c27aff; }
 
   .link {
     @apply underline underline-offset-4 decoration-primary hover:opacity-80;

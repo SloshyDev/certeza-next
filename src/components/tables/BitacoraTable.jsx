@@ -21,7 +21,12 @@ const TIPO_OPTIONS = [
   "OTRO",
 ];
 
-export default function BitacoraTable({ data, showEmisor = true }) {
+export default function BitacoraTable({
+  data,
+  showEmisor = true,
+  canDelete = false,
+  canEdit = false,
+}) {
   const [mounted, setMounted] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [grouping, setGrouping] = useState(showEmisor ? ["emisor"] : []);
@@ -40,6 +45,7 @@ export default function BitacoraTable({ data, showEmisor = true }) {
   }, [data]);
 
   async function handleTipoChange(id, nextTipo) {
+    if (!canEdit) return;
     try {
       const res = await fetch("/api/bitacora/tipo", {
         method: "PATCH",
@@ -72,6 +78,20 @@ export default function BitacoraTable({ data, showEmisor = true }) {
       } finally {
         setLoadingMap((prev) => ({ ...prev, [id]: false }));
       }
+    }
+  }
+
+  async function handleDelete(id) {
+    if (!canDelete) return;
+    const ok = window.confirm(`Eliminar registro #${id}?`);
+    if (!ok) return;
+    try {
+      const res = await fetch(`/api/bitacora/${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error("delete-failed");
+      setRows((prev) => prev.filter((r) => r.id !== id));
+    } catch (e) {
+      // no comments
     }
   }
 
@@ -109,6 +129,26 @@ export default function BitacoraTable({ data, showEmisor = true }) {
         },
         size: 120,
       }),
+      ...(canDelete
+        ? [
+            columnHelper.display({
+              id: "acciones",
+              header: () => "Acciones",
+              cell: ({ row }) => {
+                const id = row.original?.id;
+                return (
+                  <button
+                    className="px-2 py-1 border rounded text-red-600"
+                    onClick={() => handleDelete(id)}
+                  >
+                    Eliminar
+                  </button>
+                );
+              },
+              size: 120,
+            }),
+          ]
+        : []),
       columnHelper.display({
         id: "llegada",
         header: () => "Llegada",
@@ -129,14 +169,19 @@ export default function BitacoraTable({ data, showEmisor = true }) {
         cell: ({ row }) => {
           const id = row.original?.id;
           const value = row.original?.tipo || "";
+          if (!canEdit) return value;
           return (
             <select
-              className="border rounded px-2 py-1"
+              className="border border-border rounded px-2 py-1 bg-white/10 backdrop-blur-md text-foreground focus:bg-white/20 focus:outline-none"
               value={value}
               onChange={(e) => handleTipoChange(id, e.target.value)}
             >
               {TIPO_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
+                <option
+                  key={opt}
+                  value={opt}
+                  className="bg-background text-foreground"
+                >
                   {opt}
                 </option>
               ))}
@@ -186,15 +231,15 @@ export default function BitacoraTable({ data, showEmisor = true }) {
 
   if (!mounted) return null;
   return (
-    <div className="overflow-auto rounded border border-gray-200">
+    <div className="overflow-visible rounded border border-gray-200">
       <table className="min-w-full text-sm">
-        <thead className="bg-gray-50 dark:bg-gray-900">
+        <thead className="bg-muted/10">
           {table.getHeaderGroups().map((hg) => (
             <tr key={hg.id}>
               {hg.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300"
+                  className="px-3 py-2 text-left font-medium text-muted-foreground"
                 >
                   {header.isPlaceholder ? null : (
                     <div
@@ -221,15 +266,15 @@ export default function BitacoraTable({ data, showEmisor = true }) {
         <tbody>
           {table.getRowModel().rows.map((row) => (
             <Fragment key={row.id}>
-              <tr className="border-t border-gray-100">
+              <tr className="border-t border-border">
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className="px-3 py-2 text-gray-900 align-top"
+                    className="px-3 py-2 text-foreground align-top"
                   >
                     {cell.getIsGrouped() ? (
                       <button
-                        className="mr-2 text-blue-600"
+                        className="mr-2 text-accent"
                         onClick={row.getToggleExpandedHandler()}
                       >
                         {row.getIsExpanded() ? "−" : "+"}
@@ -243,7 +288,7 @@ export default function BitacoraTable({ data, showEmisor = true }) {
                 <tr>
                   <td
                     colSpan={table.getAllColumns().length}
-                    className="px-3 py-2 bg-gray-50"
+                    className="px-3 py-2 bg-muted/5"
                   >
                     {loadingMap[row.original?.id] ? (
                       <div className="text-sm">Cargando...</div>
@@ -258,7 +303,10 @@ export default function BitacoraTable({ data, showEmisor = true }) {
                               historyMap[row.original?.id]?.polizas_history ||
                               []
                             ).map((h) => (
-                              <li key={h.id} className="border rounded p-2">
+                              <li
+                                key={h.id}
+                                className="border border-border rounded p-2"
+                              >
                                 <div className="text-xs opacity-70">
                                   {h.fecha_modificacion?.toString() || ""}
                                 </div>
@@ -292,7 +340,10 @@ export default function BitacoraTable({ data, showEmisor = true }) {
                               historyMap[row.original?.id]
                                 ?.bitacora_historial || []
                             ).map((h, idx) => (
-                              <li key={idx} className="border rounded p-2">
+                              <li
+                                key={idx}
+                                className="border border-border rounded p-2"
+                              >
                                 <div className="text-xs opacity-70">
                                   {h.fecha_actualizacion?.toString() || ""}
                                 </div>

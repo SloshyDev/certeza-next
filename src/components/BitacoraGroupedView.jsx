@@ -11,20 +11,71 @@ const TIPO_OPTIONS = [
   "OTRO",
 ];
 
-export default function BitacoraGroupedView({ data }) {
+export default function BitacoraGroupedView({
+  data,
+  start,
+  end,
+  canDelete = false,
+  canCreate = false,
+  canEdit = false,
+}) {
   const [mounted, setMounted] = useState(false);
   const [rows, setRows] = useState(Array.isArray(data) ? data : []);
   const [extra, setExtra] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [asesores, setAsesores] = useState([]);
+  const [emisores, setEmisores] = useState([]);
+  const [form, setForm] = useState({
+    emisor: "",
+    tipo: "EMISION",
+    asesor: "",
+    asunto: "",
+    dia_llegada: "",
+    hora_llegada: "",
+    fecha_asignada: "",
+    hora_asignado: "",
+  });
   const [searchId, setSearchId] = useState("");
   const [searchAsunto, setSearchAsunto] = useState("");
   const [filterAsesor, setFilterAsesor] = useState("");
   const [filterTipo, setFilterTipo] = useState("");
   const [filterEstatus, setFilterEstatus] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
     setRows(Array.isArray(data) ? data : []);
   }, [data]);
+
+  useEffect(() => {
+    function handleOpen() {
+      if (!canCreate) return;
+      setShowForm(true);
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("open-bitacora-form", handleOpen);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("open-bitacora-form", handleOpen);
+      }
+    };
+  }, [canCreate]);
+
+  useEffect(() => {
+    fetch("/api/asesores")
+      .then((r) => r.json())
+      .then((list) => setAsesores(Array.isArray(list) ? list : []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/emisores")
+      .then((r) => r.json())
+      .then((list) => setEmisores(Array.isArray(list) ? list : []))
+      .catch(() => {});
+  }, []);
 
   const asesorOptions = useMemo(() => {
     const s = new Set();
@@ -49,13 +100,27 @@ export default function BitacoraGroupedView({ data }) {
     const sas = searchAsunto.trim().toLowerCase();
     return allRows.filter((r) => {
       if (sid && !String(r.id).includes(sid)) return false;
-      if (sas && !String(r.asunto || "").toLowerCase().includes(sas)) return false;
+      if (
+        sas &&
+        !String(r.asunto || "")
+          .toLowerCase()
+          .includes(sas)
+      )
+        return false;
       if (filterAsesor && String(r.asesor || "") !== filterAsesor) return false;
       if (filterTipo && String(r.tipo || "") !== filterTipo) return false;
-      if (filterEstatus && String(r.estatus || "") !== filterEstatus) return false;
+      if (filterEstatus && String(r.estatus || "") !== filterEstatus)
+        return false;
       return true;
     });
-  }, [allRows, searchId, searchAsunto, filterAsesor, filterTipo, filterEstatus]);
+  }, [
+    allRows,
+    searchId,
+    searchAsunto,
+    filterAsesor,
+    filterTipo,
+    filterEstatus,
+  ]);
 
   const groups = useMemo(() => {
     const m = new Map();
@@ -66,7 +131,10 @@ export default function BitacoraGroupedView({ data }) {
     }
     return m;
   }, [filtered]);
-  const groupKeys = useMemo(() => Array.from(groups.keys()).sort((a, b) => a.localeCompare(b)), [groups]);
+  const groupKeys = useMemo(
+    () => Array.from(groups.keys()).sort((a, b) => a.localeCompare(b)),
+    [groups]
+  );
 
   function clearFilters() {
     setSearchId("");
@@ -92,10 +160,275 @@ export default function BitacoraGroupedView({ data }) {
       .catch(() => {});
   }, [searchId, searchAsunto]);
 
+  useEffect(() => {
+    function isTodayStr(s) {
+      const now = new Date();
+      const yyyy = String(now.getFullYear());
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const today = `${yyyy}-${mm}-${dd}`;
+      return s === today;
+    }
+    const shouldPoll =
+      typeof start === "string" &&
+      typeof end === "string" &&
+      start === end &&
+      isTodayStr(end);
+    let timeoutId = null;
+    let aborted = false;
+    async function tick() {
+      if (aborted) return;
+      if (document.visibilityState !== "visible") {
+        timeoutId = setTimeout(tick, 60000);
+        return;
+      }
+      try {
+        setIsRefreshing(true);
+        const url = new URL(window.location.origin + "/api/bitacora/list");
+        url.searchParams.set("startDate", start);
+        url.searchParams.set("endDate", end);
+        const res = await fetch(url.toString(), { cache: "no-store" });
+        const rowsNew = await res.json();
+        if (Array.isArray(rowsNew)) {
+          setRows(rowsNew);
+          const now = new Date();
+          const hh = String(now.getHours()).padStart(2, "0");
+          const min = String(now.getMinutes()).padStart(2, "0");
+          const sec = String(now.getSeconds()).padStart(2, "0");
+          setLastUpdatedAt(`${hh}:${min}:${sec}`);
+        }
+      } catch (_) {
+      } finally {
+        setIsRefreshing(false);
+        timeoutId = setTimeout(tick, 45000);
+      }
+    }
+    if (shouldPoll) {
+      timeoutId = setTimeout(tick, 45000);
+    }
+    return () => {
+      aborted = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [start, end]);
+
+  async function submitForm(e) {
+    e.preventDefault();
+    if (!canCreate) return;
+    try {
+      const payload = {
+        emisor: form.emisor.trim(),
+        tipo: form.tipo,
+        asesor: Number(form.asesor),
+        asunto: form.asunto.trim(),
+        dia_llegada: form.dia_llegada,
+        hora_llegada: form.hora_llegada,
+        fecha_asignada: form.fecha_asignada,
+        hora_asignado: form.hora_asignado,
+      };
+      const res = await fetch("/api/bitacora", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error("create-failed");
+      const row = json.row;
+      setRows((prev) => [row, ...prev]);
+      setShowForm(false);
+      setForm({
+        emisor: "",
+        tipo: "EMISION",
+        asesor: "",
+        asunto: "",
+        dia_llegada: "",
+        hora_llegada: "",
+        fecha_asignada: "",
+        hora_asignado: "",
+      });
+    } catch (e) {}
+  }
+
   if (!mounted) return null;
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-visible">
+      {showForm ? (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowForm(false)}
+          />
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="w-full max-w-3xl rounded-lg bg-white shadow-lg overflow-visible">
+              <div className="flex items-center justify-between border-b p-3">
+                <h3 className="text-lg font-semibold">Nuevo registro</h3>
+                <button
+                  className="px-2 py-1"
+                  onClick={() => setShowForm(false)}
+                >
+                  ✕
+                </button>
+              </div>
+              <form
+                className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
+                onSubmit={submitForm}
+              >
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Emisor</label>
+                  <select
+                    className="border rounded px-2 py-1"
+                    value={form.emisor}
+                    onFocus={() => {
+                      const now = new Date();
+                      const yyyy = String(now.getFullYear());
+                      const mm = String(now.getMonth() + 1).padStart(2, "0");
+                      const dd = String(now.getDate()).padStart(2, "0");
+                      const hh = String(now.getHours()).padStart(2, "0");
+                      const min = String(now.getMinutes()).padStart(2, "0");
+                      const dateStr = `${yyyy}-${mm}-${dd}`;
+                      const timeStr = `${hh}:${min}`;
+                      setForm((f) => ({
+                        ...f,
+                        dia_llegada: f.dia_llegada || dateStr,
+                        hora_llegada: f.hora_llegada || timeStr,
+                        fecha_asignada: f.fecha_asignada || dateStr,
+                        hora_asignado: f.hora_asignado || timeStr,
+                      }));
+                    }}
+                    onChange={(e) =>
+                      setForm({ ...form, emisor: e.target.value })
+                    }
+                    required
+                  >
+                    <option value="">Selecciona</option>
+                    {emisores.map((em) => (
+                      <option key={em} value={em}>
+                        {em}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Tipo</label>
+                  <select
+                    className="border rounded px-2 py-1"
+                    value={form.tipo}
+                    onChange={(e) => setForm({ ...form, tipo: e.target.value })}
+                  >
+                    {TIPO_OPTIONS.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Asesor</label>
+                  <select
+                    className="border rounded px-2 py-1"
+                    value={form.asesor}
+                    onChange={(e) =>
+                      setForm({ ...form, asesor: e.target.value })
+                    }
+                    required
+                  >
+                    <option value="">Selecciona</option>
+                    {asesores.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1 md:col-span-2 lg:col-span-3">
+                  <label className="text-sm">Asunto</label>
+                  <input
+                    className="border rounded px-2 py-1"
+                    value={form.asunto}
+                    onChange={(e) =>
+                      setForm({ ...form, asunto: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Fecha llegada</label>
+                  <input
+                    type="date"
+                    className="border rounded px-2 py-1"
+                    value={form.dia_llegada}
+                    onChange={(e) =>
+                      setForm({ ...form, dia_llegada: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Hora llegada</label>
+                  <input
+                    type="time"
+                    className="border rounded px-2 py-1"
+                    value={form.hora_llegada}
+                    onChange={(e) =>
+                      setForm({ ...form, hora_llegada: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Fecha asignación</label>
+                  <input
+                    type="date"
+                    className="border rounded px-2 py-1"
+                    value={form.fecha_asignada}
+                    onChange={(e) =>
+                      setForm({ ...form, fecha_asignada: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Hora asignación</label>
+                  <input
+                    type="time"
+                    className="border rounded px-2 py-1"
+                    value={form.hora_asignado}
+                    onChange={(e) =>
+                      setForm({ ...form, hora_asignado: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2 lg:col-span-3 flex items-center gap-2">
+                  <button
+                    type="submit"
+                    className="border rounded px-3 py-1 bg-gray-100"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    className="border rounded px-3 py-1"
+                    onClick={() => setShowForm(false)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-end gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-2 py-1 rounded border">
+            {isRefreshing
+              ? "Actualizando…"
+              : lastUpdatedAt
+              ? `Actualizado ${lastUpdatedAt}`
+              : "Sin actualizaciones"}
+          </span>
+        </div>
         <div className="flex flex-col gap-1">
           <label className="text-sm">Buscar por ID</label>
           <input
@@ -123,7 +456,9 @@ export default function BitacoraGroupedView({ data }) {
           >
             <option value="">Todos</option>
             {asesorOptions.map((a) => (
-              <option key={a} value={a}>{a}</option>
+              <option key={a} value={a}>
+                {a}
+              </option>
             ))}
           </select>
         </div>
@@ -136,7 +471,9 @@ export default function BitacoraGroupedView({ data }) {
           >
             <option value="">Todos</option>
             {TIPO_OPTIONS.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t}>
+                {t}
+              </option>
             ))}
           </select>
         </div>
@@ -149,21 +486,35 @@ export default function BitacoraGroupedView({ data }) {
           >
             <option value="">Todos</option>
             {estatusOptions.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
         </div>
-        <button className="border rounded px-3 py-1 bg-gray-100" onClick={clearFilters}>Limpiar</button>
+        <button
+          className="border rounded px-3 py-1 bg-gray-100"
+          onClick={clearFilters}
+        >
+          Limpiar
+        </button>
       </div>
       <div className="space-y-8">
         {groupKeys.map((key) => (
           <div key={key} className="space-y-2">
             <h2 className="text-lg font-semibold">Emisor: {key}</h2>
-            <BitacoraTable data={groups.get(key)} showEmisor={false} />
+            <BitacoraTable
+              data={groups.get(key)}
+              showEmisor={false}
+              canDelete={canDelete}
+              canEdit={canEdit}
+            />
           </div>
         ))}
         {groupKeys.length === 0 ? (
-          <p className="opacity-70">Sin resultados con los filtros/búsquedas aplicados.</p>
+          <p className="opacity-70">
+            Sin resultados con los filtros/búsquedas aplicados.
+          </p>
         ) : null}
       </div>
     </div>

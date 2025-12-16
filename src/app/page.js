@@ -27,9 +27,7 @@ export default async function Home(props) {
   const searchParams =
     props && props.searchParams ? await props.searchParams : {};
   const today = new Date().toISOString().slice(0, 10);
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const defaultStart = thirtyDaysAgo.toISOString().slice(0, 10);
+  const defaultStart = today;
   const rawStart = searchParams && searchParams.start;
   const rawEnd = searchParams && searchParams.end;
   const normalize = (val, fallback) => {
@@ -71,26 +69,26 @@ export default async function Home(props) {
   const selectedTipos = new Set(tiposArray.map((t) => String(t).toUpperCase()));
   const emisorTipoView =
     selectedTipos.size > 0
-      ? emisorTipo.filter((r) =>
-          selectedTipos.has(String(r.tipo || "").toUpperCase())
+      ? emisorTipo.filter(
+          (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
         )
       : emisorTipo;
   const tiposSerieView =
     selectedTipos.size > 0
-      ? tiposSerie.filter((r) =>
-          selectedTipos.has(String(r.tipo || "").toUpperCase())
+      ? tiposSerie.filter(
+          (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
         )
       : tiposSerie;
   const asesorTipoView =
     selectedTipos.size > 0
-      ? asesorTipo.filter((r) =>
-          selectedTipos.has(String(r.tipo || "").toUpperCase())
+      ? asesorTipo.filter(
+          (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
         )
       : asesorTipo;
   const tiposTotalsView =
     selectedTipos.size > 0
-      ? tiposTotals.filter((r) =>
-          selectedTipos.has(String(r.tipo || "").toUpperCase())
+      ? tiposTotals.filter(
+          (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
         )
       : tiposTotals;
 
@@ -176,15 +174,23 @@ export default async function Home(props) {
                     key={s.tipo}
                     href={hrefToggleTipo(s.tipo)}
                     className={`surface surface-type p-3 w-full ${
-                      selectedTipos.has(String(s.tipo || "").toUpperCase())
+                      selectedTipos.size === 0 ||
+                      !selectedTipos.has(String(s.tipo || "").toUpperCase())
                         ? "ring-2 ring-accent"
                         : "opacity-60"
                     }`}
                     data-type={(s.tipo || "").toUpperCase()}
+                    data-selected={
+                      selectedTipos.size === 0 ||
+                      !selectedTipos.has(String(s.tipo || "").toUpperCase())
+                        ? "true"
+                        : "false"
+                    }
                     role="button"
-                    aria-pressed={selectedTipos.has(
-                      String(s.tipo || "").toUpperCase()
-                    )}
+                    aria-pressed={
+                      selectedTipos.size === 0 ||
+                      !selectedTipos.has(String(s.tipo || "").toUpperCase())
+                    }
                     aria-label={`Filtrar por tipo ${(
                       s.tipo || "(vacío)"
                     ).toString()}`}

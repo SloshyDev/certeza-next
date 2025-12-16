@@ -1,6 +1,9 @@
 import BitacoraGroupedView from "@/components/BitacoraGroupedView";
 import { getBitacoraTableData } from "@/lib/bitacora";
-import { requireAuth } from "@/lib/auth";
+import { auth } from "@/../auth";
+import { hasRole } from "@/lib/roles";
+import AddBitacoraButton from "@/components/AddBitacoraButton";
+import { redirect } from "next/navigation";
 
 function todayStr() {
   const now = new Date();
@@ -13,9 +16,12 @@ function normalizeDate(val, fallback) {
 }
 
 export default async function Page(props) {
-  // Verificar autenticación
-  await requireAuth();
+  const session = await auth();
 
+  // Si no hay sesión, redirigir al login
+  if (!session) {
+    redirect("/auth/sign-in");
+  }
   const searchParams =
     props && props.searchParams ? await props.searchParams : {};
   const today = todayStr();
@@ -23,11 +29,17 @@ export default async function Page(props) {
   const start = normalizeDate(searchParams?.startDate, today);
 
   const data = await getBitacoraTableData(start, end);
+  const canDelete = !!session && hasRole(session, ["admin"]);
+  const canCreate = !!session && hasRole(session, ["admin", "editor"]);
+  const canEdit = !!session && hasRole(session, ["admin", "editor"]);
 
   return (
-    <section className="p-4 space-y-4">
+    <section className="p-4 space-y-4 overflow-visible min-h-screen">
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Bitácora</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold">Bitácora</h1>
+          {canCreate ? <AddBitacoraButton /> : null}
+        </div>
         <form className="flex gap-2" action="/bitacora" method="get">
           <input
             type="date"
@@ -46,7 +58,14 @@ export default async function Page(props) {
           </button>
         </form>
       </header>
-      <BitacoraGroupedView data={data} />
+      <BitacoraGroupedView
+        data={data}
+        start={start}
+        end={end}
+        canDelete={canDelete}
+        canCreate={canCreate}
+        canEdit={canEdit}
+      />
     </section>
   );
 }
