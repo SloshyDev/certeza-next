@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -27,6 +27,9 @@ export default function BitacoraTable({ data, showEmisor = true }) {
   const [grouping, setGrouping] = useState(showEmisor ? ["emisor"] : []);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [rows, setRows] = useState(data || []);
+  const [expanded, setExpanded] = useState({});
+  const [historyMap, setHistoryMap] = useState({});
+  const [loadingMap, setLoadingMap] = useState({});
 
   useEffect(() => {
     setMounted(true);
@@ -53,6 +56,25 @@ export default function BitacoraTable({ data, showEmisor = true }) {
     }
   }
 
+  async function toggleHistory(id) {
+    const isOpen = !!expanded[id];
+    const next = { ...expanded, [id]: !isOpen };
+    setExpanded(next);
+    if (!isOpen && !historyMap[id] && !loadingMap[id]) {
+      setLoadingMap((prev) => ({ ...prev, [id]: true }));
+      try {
+        const url = new URL(window.location.origin + "/api/bitacora/history");
+        url.searchParams.set("bitacoraId", String(id));
+        const res = await fetch(url.toString());
+        const json = await res.json();
+        setHistoryMap((prev) => ({ ...prev, [id]: json }));
+      } catch (e) {
+      } finally {
+        setLoadingMap((prev) => ({ ...prev, [id]: false }));
+      }
+    }
+  }
+
   const columns = useMemo(
     () => [
       ...(showEmisor
@@ -68,6 +90,24 @@ export default function BitacoraTable({ data, showEmisor = true }) {
         header: () => "ID",
         cell: (info) => info.getValue(),
         size: 80,
+      }),
+      columnHelper.display({
+        id: "hist",
+        header: () => "Historial",
+        cell: ({ row }) => {
+          const id = row.original?.id;
+          const open = !!expanded[id];
+          const loading = !!loadingMap[id];
+          return (
+            <button
+              className="px-2 py-1 border rounded"
+              onClick={() => toggleHistory(id)}
+            >
+              {loading ? "Cargando..." : open ? "Ocultar" : "Ver"}
+            </button>
+          );
+        },
+        size: 120,
       }),
       columnHelper.display({
         id: "llegada",
@@ -146,7 +186,7 @@ export default function BitacoraTable({ data, showEmisor = true }) {
 
   if (!mounted) return null;
   return (
-    <div className="overflow-auto rounded border border-border">
+    <div className="overflow-auto rounded border border-gray-200">
       <table className="min-w-full text-sm">
         <thead className="bg-gray-50 dark:bg-gray-900">
           {table.getHeaderGroups().map((hg) => (
@@ -180,21 +220,106 @@ export default function BitacoraTable({ data, showEmisor = true }) {
         </thead>
         <tbody>
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="border-t border-border">
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-3 py-2 text-foreground">
-                  {cell.getIsGrouped() ? (
-                    <button
-                      className="mr-2 text-blue-600 dark:text-blue-400"
-                      onClick={row.getToggleExpandedHandler()}
-                    >
-                      {row.getIsExpanded() ? "−" : "+"}
-                    </button>
-                  ) : null}
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
+            <Fragment key={row.id}>
+              <tr className="border-t border-gray-100">
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className="px-3 py-2 text-gray-900 align-top"
+                  >
+                    {cell.getIsGrouped() ? (
+                      <button
+                        className="mr-2 text-blue-600"
+                        onClick={row.getToggleExpandedHandler()}
+                      >
+                        {row.getIsExpanded() ? "−" : "+"}
+                      </button>
+                    ) : null}
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+              {expanded[row.original?.id] ? (
+                <tr>
+                  <td
+                    colSpan={table.getAllColumns().length}
+                    className="px-3 py-2 bg-gray-50"
+                  >
+                    {loadingMap[row.original?.id] ? (
+                      <div className="text-sm">Cargando...</div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <div className="font-medium mb-2">
+                            Historial de póliza
+                          </div>
+                          <ul className="space-y-2">
+                            {(
+                              historyMap[row.original?.id]?.polizas_history ||
+                              []
+                            ).map((h) => (
+                              <li key={h.id} className="border rounded p-2">
+                                <div className="text-xs opacity-70">
+                                  {h.fecha_modificacion?.toString() || ""}
+                                </div>
+                                <div className="text-sm">
+                                  {h.operacion} {h.campo_modificado}
+                                </div>
+                                <div className="text-sm">
+                                  {h.valor_anterior} → {h.valor_nuevo}
+                                </div>
+                                <div className="text-xs">
+                                  {h.usuario} · {h.no_poliza}
+                                </div>
+                              </li>
+                            ))}
+                            {(
+                              historyMap[row.original?.id]?.polizas_history ||
+                              []
+                            ).length === 0 ? (
+                              <div className="text-sm opacity-70">
+                                Sin cambios de póliza
+                              </div>
+                            ) : null}
+                          </ul>
+                        </div>
+                        <div>
+                          <div className="font-medium mb-2">
+                            Historial de bitácora
+                          </div>
+                          <ul className="space-y-2">
+                            {(
+                              historyMap[row.original?.id]
+                                ?.bitacora_historial || []
+                            ).map((h, idx) => (
+                              <li key={idx} className="border rounded p-2">
+                                <div className="text-xs opacity-70">
+                                  {h.fecha_actualizacion?.toString() || ""}
+                                </div>
+                                <div className="text-sm">
+                                  {h.estatus_anterior} → {h.estatus_nuevo}
+                                </div>
+                                <div className="text-xs">
+                                  {h.actualizado_por}
+                                </div>
+                              </li>
+                            ))}
+                            {(
+                              historyMap[row.original?.id]
+                                ?.bitacora_historial || []
+                            ).length === 0 ? (
+                              <div className="text-sm opacity-70">
+                                Sin cambios en bitácora
+                              </div>
+                            ) : null}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ) : null}
+            </Fragment>
           ))}
         </tbody>
       </table>

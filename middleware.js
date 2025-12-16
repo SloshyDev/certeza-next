@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "./auth";
-import { hasRole } from "./src/lib/roles.js";
+const hasRole = (session, required) => {
+  const roles = session?.user?.roles ?? [];
+  return required.some((r) => roles.includes(r));
+};
 
 const protectedRoutes = [
   { path: "/admin", roles: ["admin"] },
@@ -8,7 +11,7 @@ const protectedRoutes = [
   { path: "/viewer", roles: ["viewer", "editor", "admin"] },
 ];
 
-export const middleware = auth((req) => {
+export default auth((req) => {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
   if (pathname.startsWith("/api/auth")) return NextResponse.next();

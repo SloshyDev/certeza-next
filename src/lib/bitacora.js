@@ -252,3 +252,73 @@ export async function searchBitacoraByIdOrAsunto(id, asunto) {
     emisor: r.emisor || "",
   }));
 }
+
+export async function getPolizasHistoryForBitacora(bitacoraId) {
+  if (!isDbConfigured()) return [];
+  const res = await query(
+    `SELECT id,
+            poliza_id,
+            no_poliza,
+            campo_modificado,
+            valor_anterior,
+            valor_nuevo,
+            usuario,
+            fecha_modificacion,
+            operacion,
+            bitacora_id,
+            created_at
+     FROM polizas_history
+     WHERE bitacora_id = $1
+     ORDER BY fecha_modificacion ASC, id ASC`,
+    [bitacoraId]
+  );
+  return res.rows.map((r) => ({
+    id: r.id,
+    poliza_id: r.poliza_id,
+    no_poliza: r.no_poliza || "",
+    campo_modificado: r.campo_modificado || "",
+    valor_anterior: r.valor_anterior || "",
+    valor_nuevo: r.valor_nuevo || "",
+    usuario: r.usuario || "",
+    fecha_modificacion: r.fecha_modificacion,
+    operacion: r.operacion || "",
+    bitacora_id: r.bitacora_id,
+    created_at: r.created_at,
+  }));
+}
+
+export async function getBitacoraHistorial(bitacoraId) {
+  if (!isDbConfigured()) return [];
+  const res = await query(
+    `SELECT estatus_anterior,
+            estatus_nuevo,
+            fecha_respondido_anterior,
+            fecha_respondido_nueva,
+            hora_respondido_anterior,
+            hora_respondido_nueva,
+            motivo_anterior,
+            motivo_nuevo,
+            actualizado_por,
+            fecha_actualizacion,
+            emisor_anterior,
+            emisor_nuevo
+     FROM bitacora_historial
+     WHERE bitacora_id = $1
+     ORDER BY fecha_actualizacion ASC`,
+    [bitacoraId]
+  );
+  return res.rows.map((r) => ({
+    estatus_anterior: r.estatus_anterior || "",
+    estatus_nuevo: r.estatus_nuevo || "",
+    fecha_respondido_anterior: r.fecha_respondido_anterior,
+    fecha_respondido_nueva: r.fecha_respondido_nueva,
+    hora_respondido_anterior: r.hora_respondido_anterior,
+    hora_respondido_nueva: r.hora_respondido_nueva,
+    motivo_anterior: r.motivo_anterior || "",
+    motivo_nuevo: r.motivo_nuevo || "",
+    actualizado_por: r.actualizado_por || "",
+    fecha_actualizacion: r.fecha_actualizacion,
+    emisor_anterior: r.emisor_anterior || "",
+    emisor_nuevo: r.emisor_nuevo || "",
+  }));
+}
