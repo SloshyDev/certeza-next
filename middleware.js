@@ -8,7 +8,7 @@ const protectedRoutes = [
   { path: "/viewer", roles: ["viewer", "editor", "admin"] },
 ];
 
-export default auth((req) => {
+export const middleware = auth((req) => {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
   if (pathname.startsWith("/api/auth")) return NextResponse.next();
