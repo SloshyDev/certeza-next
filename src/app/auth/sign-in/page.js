@@ -13,7 +13,8 @@ export default async function SignInPage(props) {
 
   let errorMessage = "";
   if (error === "AccessDenied") {
-    errorMessage = "Acceso denegado o cancelado.";
+    errorMessage =
+      "Acceso denegado. Es posible que tu cuenta no pertenezca a la organización permitida.";
   } else if (error === "Verification") {
     errorMessage = "El enlace de verificación ha expirado o ya ha sido usado.";
   } else if (error) {
