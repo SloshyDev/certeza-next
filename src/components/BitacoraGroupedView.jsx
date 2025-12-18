@@ -667,12 +667,6 @@ export default function BitacoraGroupedView({
         </button>
         <button
           className="border rounded px-3 py-1 bg-gray-100"
-          onClick={clearFilters}
-        >
-          Limpiar
-        </button>
-        <button
-          className="border rounded px-3 py-1 bg-gray-100"
           onClick={onExport}
         >
           Exportar
