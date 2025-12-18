@@ -11,8 +11,8 @@ const protectedRoutes = [
   { path: "/admin", roles: ["admin"] },
   { path: "/editor", roles: ["editor", "admin"] },
   { path: "/viewer", roles: ["viewer", "editor", "admin"] },
-  { path: "/bitacora", roles: ["viewer", "editor", "admin"] },
-  { path: "/api/bitacora", roles: ["viewer", "editor", "admin"] },
+  { path: "/bitacora", roles: ["viewer", "editor", "admin", "emisor"] },
+  { path: "/api/bitacora", roles: ["viewer", "editor", "admin", "emisor"] },
 ];
 
 // Rutas que son públicas y no requieren autenticación
