@@ -1,9 +1,17 @@
 import Link from "next/link";
 import { auth } from "@/../auth";
-import { listRoles, listUsers, setUserRole } from "@/lib/roles";
+import {
+  listRoles,
+  listUsers,
+  setUserRole,
+  setUserAliasFlexible,
+  createRole,
+  ensureUsersAuthAliasColumn,
+} from "@/lib/roles";
 import { isDbConfigured } from "@/lib/db";
 import Button from "@/components/ui/Button";
 import RoleSelect from "@/components/ui/RoleSelect";
+import { revalidatePath } from "next/cache";
 import {
   UserGroupIcon,
   ShieldCheckIcon,
@@ -13,9 +21,15 @@ import {
 
 export default async function AdminPage() {
   const session = await auth();
+  const dbReady = isDbConfigured();
+  if (dbReady) {
+    await ensureUsersAuthAliasColumn();
+    await createRole({ name: "emisor" });
+    await createRole({ name: "coordinador" });
+    await createRole({ name: "supervisor_emi" });
+  }
   const roles = await listRoles();
   const isAdmin = session?.user?.roles?.includes("admin");
-  const dbReady = isDbConfigured();
   const users = dbReady ? await listUsers() : [];
 
   return (
@@ -67,6 +81,7 @@ function UsersList({ users, roles }) {
     const userId = Number(formData.get("userId"));
     const roleName = String(formData.get("role"));
     await setUserRole(userId, roleName);
+    revalidatePath("/admin");
   }
   return (
     <div className="mt-6">
@@ -78,6 +93,7 @@ function UsersList({ users, roles }) {
               <th className="p-3 w-16 text-muted-foreground font-medium">ID</th>
               <th className="p-3 text-muted-foreground font-medium">Email</th>
               <th className="p-3 text-muted-foreground font-medium">Nombre</th>
+              <th className="p-3 text-muted-foreground font-medium">Alias</th>
               <th className="p-3 text-muted-foreground font-medium">Roles</th>
               <th className="p-3 text-muted-foreground font-medium">
                 Editar rol
@@ -93,6 +109,13 @@ function UsersList({ users, roles }) {
                 <td className="p-3 text-muted-foreground">{u.id}</td>
                 <td className="p-3 text-foreground font-medium">{u.email}</td>
                 <td className="p-3 text-foreground">{u.name}</td>
+                <td className="p-3">
+                  <AliasForm
+                    userId={u.id}
+                    email={u.email}
+                    initialAlias={u.alias || ""}
+                  />
+                </td>
                 <td className="p-3 text-muted-foreground">
                   {(u.roles || []).join(", ")}
                 </td>
@@ -123,5 +146,36 @@ function UsersList({ users, roles }) {
         </table>
       </div>
     </div>
+  );
+}
+
+function AliasForm({ userId, email, initialAlias }) {
+  async function onUpdateAlias(formData) {
+    "use server";
+    const id = Number(formData.get("userId"));
+    const email = String(formData.get("email") || "").trim();
+    const alias = String(formData.get("alias") || "").trim();
+    const ok = await setUserAliasFlexible(id, email, alias || null);
+    if (!ok) {
+      // ensure column exists and try again
+      await ensureUsersAuthAliasColumn();
+      await setUserAliasFlexible(id, email, alias || null);
+    }
+    revalidatePath("/admin");
+  }
+  return (
+    <form action={onUpdateAlias} className="flex items-center gap-2">
+      <input type="hidden" name="userId" value={userId} />
+      <input type="hidden" name="email" value={email || ""} />
+      <input
+        name="alias"
+        defaultValue={initialAlias}
+        placeholder="Alias"
+        className="border rounded px-2 py-1"
+      />
+      <Button variant="secondary" type="submit">
+        Guardar
+      </Button>
+    </form>
   );
 }

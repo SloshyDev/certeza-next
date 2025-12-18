@@ -19,6 +19,8 @@ import EmisorCharts from "@/components/charts/EmisorCharts";
 export default async function Home(props) {
   const session = await auth();
 
+  console.log(session);
+
   // Si no hay sesión, redirigir al login
   if (!session) {
     redirect("/auth/sign-in");
@@ -105,13 +107,14 @@ export default async function Home(props) {
     return `/?${qs}`;
   }
 
+  const displayName = session.user?.alias ?? session.user?.email;
+
   return (
     <div className="py-6">
       <main className="container-responsive px-4 sm:px-6">
         <h1 className="text-balance">CERTEZA App</h1>
         <p className="mt-4">
-          Hola, {session.user?.name || session.user?.email} (
-          {session.user?.email})
+          Hola, {displayName} ({session.user?.email})
         </p>
         <p className="mt-2">
           Roles: {(session.user?.roles || []).join(", ") || "sin roles"}

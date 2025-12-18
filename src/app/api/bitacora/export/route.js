@@ -1,5 +1,5 @@
 import { auth } from "@/../auth";
-import { hasRole } from "@/lib/roles";
+import { hasRole, resolveUserRoles, getUserAliasByEmail } from "@/lib/roles";
 import { isDbConfigured, query } from "@/lib/db";
 import { getBitacoraTableData } from "@/lib/bitacora";
 import * as XLSX from "xlsx";
@@ -27,7 +27,27 @@ export async function GET(req) {
   const startDate = normDate(url.searchParams.get("startDate"), today);
   const endDate = normDate(url.searchParams.get("endDate"), today);
 
-  const data = await getBitacoraTableData(startDate, endDate);
+  let emisorEmail = null;
+  let emisorAlias = null;
+  const roles = await resolveUserRoles(session);
+  const isEmisor = roles.includes("emisor");
+  const isAdmin = roles.includes("admin");
+  const isEditor = roles.includes("editor");
+  if (isEmisor && !isAdmin && !isEditor) {
+    emisorEmail = session.user?.email || null;
+    emisorAlias = session.user?.alias ?? null;
+    if (!emisorAlias) {
+      emisorAlias =
+        (await getUserAliasByEmail(session.user?.email || "")) || null;
+    }
+  }
+
+  const data = await getBitacoraTableData(
+    startDate,
+    endDate,
+    emisorEmail,
+    emisorAlias
+  );
   const ids = data.map((r) => r.id);
   let firstMap = new Map();
   if (ids.length) {

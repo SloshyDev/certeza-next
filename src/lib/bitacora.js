@@ -140,7 +140,12 @@ export async function getHoraAsignadoSeries(startDate, endDate) {
   }));
 }
 
-export async function getBitacoraTableData(startDate, endDate) {
+export async function getBitacoraTableData(
+  startDate,
+  endDate,
+  emisorEmail = null,
+  emisorAlias = null
+) {
   if (!isDbConfigured()) return [];
   const res = await query(
     `WITH hist AS (
@@ -185,11 +190,16 @@ export async function getBitacoraTableData(startDate, endDate) {
      LEFT JOIN asesor a ON a.id = b.asesor
      LEFT JOIN polizas p ON p.bitacora_id = b.id
      LEFT JOIN hist ON hist.bitacora_id = b.id
-     WHERE b.fecha_creacion::date BETWEEN $1 AND $2
+    WHERE b.fecha_creacion::date BETWEEN $1 AND $2
+      AND (
+        (COALESCE($3, '') = '' AND COALESCE($4, '') = '')
+        OR b.emisor = $3
+        OR b.emisor = $4
+      )
      ORDER BY b.emisor ASC,
               COALESCE(b.dia_llegada::timestamp + b.hora_llegada, b.fecha_creacion) ASC,
               b.id ASC`,
-    [startDate, endDate]
+    [startDate, endDate, emisorEmail, emisorAlias]
   );
   return res.rows.map((r) => ({
     id: r.id,
@@ -209,7 +219,12 @@ export async function getBitacoraTableData(startDate, endDate) {
   }));
 }
 
-export async function searchBitacoraByIdOrAsunto(id, asunto) {
+export async function searchBitacoraByIdOrAsunto(
+  id,
+  asunto,
+  emisorEmail = null,
+  emisorAlias = null
+) {
   if (!isDbConfigured()) return [];
   const res = await query(
     `WITH hist AS (
@@ -253,11 +268,16 @@ export async function searchBitacoraByIdOrAsunto(id, asunto) {
      LEFT JOIN asesor a ON a.id = b.asesor
      LEFT JOIN polizas p ON p.bitacora_id = b.id
      LEFT JOIN hist ON hist.bitacora_id = b.id
-     WHERE (($1 IS NOT NULL AND b.id = $1) OR ($2 IS NOT NULL AND b.asunto ILIKE '%' || $2 || '%'))
+    WHERE (($1 IS NOT NULL AND b.id = $1) OR ($2 IS NOT NULL AND b.asunto ILIKE '%' || $2 || '%'))
+      AND (
+        (COALESCE($3, '') = '' AND COALESCE($4, '') = '')
+        OR b.emisor = $3
+        OR b.emisor = $4
+      )
      ORDER BY b.emisor ASC,
               COALESCE(b.dia_llegada::timestamp + b.hora_llegada, b.fecha_creacion) ASC,
               b.id ASC`,
-    [id ?? null, asunto ?? null]
+    [id ?? null, asunto ?? null, emisorEmail, emisorAlias]
   );
   return res.rows.map((r) => ({
     id: r.id,

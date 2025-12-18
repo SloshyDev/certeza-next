@@ -60,6 +60,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
             );
             const userId = upsert.rows[0]?.id;
             token.userId = userId;
+            await client.query(
+              `ALTER TABLE IF EXISTS users_auth ADD COLUMN IF NOT EXISTS alias text`
+            );
+            const localAlias = String(profile.email).split("@")[0];
+            await client.query(
+              `UPDATE users_auth SET alias = CASE WHEN alias IS NULL OR alias='' THEN $2 ELSE alias END WHERE email = $1`,
+              [profile.email, localAlias]
+            );
             const hasAnyRole = await client.query(
               `SELECT 1 FROM user_roles WHERE user_id=$1 LIMIT 1`,
               [userId]
@@ -104,6 +112,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
             session.user.roles = roles;
           } catch {
             session.user.roles = [];
+          }
+          try {
+            if (pool && session.user?.email) {
+              const client = await pool.connect();
+              try {
+                await client.query(
+                  `ALTER TABLE IF EXISTS users_auth ADD COLUMN IF NOT EXISTS alias text`
+                );
+                const res = await client.query(
+                  `SELECT alias FROM users_auth WHERE email=$1`,
+                  [session.user.email]
+                );
+                const a = res.rows[0]?.alias;
+                session.user.alias =
+                  a && String(a).trim() !== "" ? String(a) : null;
+                if (session.user.alias == null) {
+                  const localAlias = String(session.user.email).split("@")[0];
+                  await client.query(
+                    `UPDATE users_auth SET alias = $2 WHERE email = $1`,
+                    [session.user.email, localAlias]
+                  );
+                  session.user.alias = localAlias;
+                }
+              } finally {
+                client.release();
+              }
+            } else {
+              session.user.alias = null;
+            }
+          } catch {
+            session.user.alias = null;
           }
         }
         return session;
