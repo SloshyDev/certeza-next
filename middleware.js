@@ -11,12 +11,12 @@ const protectedRoutes = [
   { path: "/admin", roles: ["admin"] },
   { path: "/editor", roles: ["editor", "admin"] },
   { path: "/viewer", roles: ["viewer", "editor", "admin"] },
-  { path: "/bitacora", roles: ["viewer", "editor", "admin", "emisor"] },
-  { path: "/api/bitacora", roles: ["viewer", "editor", "admin", "emisor"] },
+  { path: "/bitacora", roles: ["viewer", "editor", "admin", "emisor", "supervisor", "supervisor_emi"] },
+  { path: "/api/bitacora", roles: ["viewer", "editor", "admin", "emisor", "supervisor", "supervisor_emi"] },
 ];
 
 // Rutas que son públicas y no requieren autenticación
-const publicRoutes = ["/", "/auth/sign-in"];
+const publicRoutes = ["/", "/auth/sign-in", "/auth/sign-out"];
 
 export async function middleware(req) {
   const { nextUrl } = req;

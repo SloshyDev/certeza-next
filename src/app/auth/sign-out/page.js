@@ -1,9 +1,6 @@
-import { auth, signOut } from "@/../auth";
-import { requireAuth } from "@/lib/auth";
+import { signOut } from "@/../auth";
 
 export default async function SignOutPage() {
-  // Verificar autenticación
-  const session = await requireAuth();
   
   return (
     <div style={{ padding: 24 }}>

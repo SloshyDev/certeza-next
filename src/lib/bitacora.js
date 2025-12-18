@@ -190,12 +190,12 @@ export async function getBitacoraTableData(
      LEFT JOIN asesor a ON a.id = b.asesor
      LEFT JOIN polizas p ON p.bitacora_id = b.id
      LEFT JOIN hist ON hist.bitacora_id = b.id
-    WHERE b.fecha_creacion::date BETWEEN $1 AND $2
-      AND (
-        (COALESCE($3, '') = '' AND COALESCE($4, '') = '')
-        OR b.emisor = $3
-        OR b.emisor = $4
-      )
+   WHERE b.fecha_creacion::date BETWEEN $1 AND $2
+     AND (
+       (COALESCE($3, '') = '' AND COALESCE($4, '') = '')
+       OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($3))
+       OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($4))
+     )
      ORDER BY b.emisor ASC,
               COALESCE(b.dia_llegada::timestamp + b.hora_llegada, b.fecha_creacion) ASC,
               b.id ASC`,
@@ -268,12 +268,12 @@ export async function searchBitacoraByIdOrAsunto(
      LEFT JOIN asesor a ON a.id = b.asesor
      LEFT JOIN polizas p ON p.bitacora_id = b.id
      LEFT JOIN hist ON hist.bitacora_id = b.id
-    WHERE (($1 IS NOT NULL AND b.id = $1) OR ($2 IS NOT NULL AND b.asunto ILIKE '%' || $2 || '%'))
-      AND (
-        (COALESCE($3, '') = '' AND COALESCE($4, '') = '')
-        OR b.emisor = $3
-        OR b.emisor = $4
-      )
+   WHERE (($1 IS NOT NULL AND b.id = $1) OR ($2 IS NOT NULL AND b.asunto ILIKE '%' || $2 || '%'))
+     AND (
+       (COALESCE($3, '') = '' AND COALESCE($4, '') = '')
+       OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($3))
+       OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($4))
+     )
      ORDER BY b.emisor ASC,
               COALESCE(b.dia_llegada::timestamp + b.hora_llegada, b.fecha_creacion) ASC,
               b.id ASC`,
