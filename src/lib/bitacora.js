@@ -119,6 +119,27 @@ export async function getHoraLlegadaSeries(startDate, endDate) {
   }));
 }
 
+export async function getHoraAsignadoSeries(startDate, endDate) {
+  if (!isDbConfigured()) return [];
+  const res = await query(
+    `SELECT to_char(fecha_asignada, 'YYYY-MM-DD') AS dia,
+            EXTRACT(HOUR FROM hora_asignado)::int AS hora,
+            COUNT(*)::int AS total
+     FROM bitacora
+     WHERE fecha_asignada BETWEEN $1 AND $2
+       AND hora_asignado IS NOT NULL
+       AND EXTRACT(HOUR FROM hora_asignado)::int BETWEEN 8 AND 19
+     GROUP BY dia, hora
+     ORDER BY dia ASC, hora ASC`,
+    [startDate, endDate]
+  );
+  return res.rows.map((r) => ({
+    dia: r.dia,
+    hora: r.hora || 0,
+    total: r.total || 0,
+  }));
+}
+
 export async function getBitacoraTableData(startDate, endDate) {
   if (!isDbConfigured()) return [];
   const res = await query(
@@ -138,6 +159,7 @@ export async function getBitacoraTableData(startDate, endDate) {
        GROUP BY bitacora_id
      )
      SELECT b.id,
+            b.asesor AS asesor_id,
             COALESCE(a.nombre, '') AS asesor,
             COALESCE(b.tipo, '') AS tipo,
             COALESCE(b.asunto, '') AS asunto,
@@ -171,6 +193,7 @@ export async function getBitacoraTableData(startDate, endDate) {
   );
   return res.rows.map((r) => ({
     id: r.id,
+    asesor_id: r.asesor_id,
     asesor: r.asesor || "",
     tipo: r.tipo || "",
     asunto: r.asunto || "",

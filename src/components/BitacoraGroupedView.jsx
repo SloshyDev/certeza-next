@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState, useEffect } from "react";
+import * as XLSX from "xlsx";
 import BitacoraTable from "@/components/tables/BitacoraTable";
 
 const TIPO_OPTIONS = [
@@ -135,6 +136,158 @@ export default function BitacoraGroupedView({
     () => Array.from(groups.keys()).sort((a, b) => a.localeCompare(b)),
     [groups]
   );
+
+  async function getFirstResponses(ids) {
+    try {
+      const res = await fetch("/api/bitacora/first-responses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const json = await res.json();
+      const arr = Array.isArray(json?.results) ? json.results : [];
+      const map = new Map(arr.map((r) => [r.id, r.first_response_iso]));
+      return ids.map((id) => {
+        const iso = map.get(id);
+        return iso ? new Date(iso) : null;
+      });
+    } catch (e) {
+      return ids.map(() => null);
+    }
+  }
+
+  async function getFirstResponseFor(id) {
+    try {
+      const url = new URL(window.location.origin + "/api/bitacora/history");
+      url.searchParams.set("bitacoraId", String(id));
+      const res = await fetch(url.toString());
+      const json = await res.json();
+      const his = Array.isArray(json?.bitacora_historial)
+        ? json.bitacora_historial
+        : [];
+      let best = null;
+      for (const h of his) {
+        const frn = h.fecha_respondido_nueva;
+        const hrn = h.hora_respondido_nueva;
+        const fra = h.fecha_respondido_anterior;
+        const hra = h.hora_respondido_anterior;
+        const candA =
+          fra && hra ? new Date(`${fra}T${String(hra).slice(0, 5)}:00`) : null;
+        const candN =
+          frn && hrn ? new Date(`${frn}T${String(hrn).slice(0, 5)}:00`) : null;
+        const cand =
+          candA && candN ? (candA < candN ? candA : candN) : candA || candN;
+        if (cand && (!best || cand < best)) best = cand;
+      }
+      return best;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function toCsv(rows, headers) {
+    const esc = (v) => {
+      const s = v == null ? "" : String(v);
+      return '"' + s.replace(/"/g, '""') + '"';
+    };
+    const head = headers.map(esc).join(",");
+    const body = rows.map((r) => r.map(esc).join(",")).join("\n");
+    return head + "\n" + body + "\n";
+  }
+
+  async function onExport() {
+    try {
+      const ids = filtered.map((r) => r.id);
+      const firstResponses = await getFirstResponses(ids);
+      const generalAoA = [
+        [
+          "ID",
+          "Emisor",
+          "Asesor",
+          "Tipo",
+          "Estatus",
+          "Asunto",
+          "Fecha llegada",
+          "Hora llegada",
+          "Resp (min)",
+          "Primera respuesta",
+        ],
+        ...filtered.map((r, idx) => [
+          r.id,
+          r.emisor || "",
+          r.asesor || "",
+          r.tipo || "",
+          r.estatus || "",
+          r.asunto || "",
+          r.dia_llegada || "",
+          r.hora_llegada || "",
+          r.tiempo_respuesta_min == null ? "" : r.tiempo_respuesta_min,
+          firstResponses[idx]
+            ? firstResponses[idx].toISOString().slice(0, 16).replace("T", " ")
+            : "",
+        ]),
+      ];
+
+      const tipos = [
+        "EMISION",
+        "COTIZACION",
+        "CANCELACION",
+        "ENDOSO",
+        "REEXPEDICION",
+        "OTRO",
+      ];
+      const byEmisor = groupKeys.map((em) => {
+        const rows = groups.get(em) || [];
+        const counts = Object.fromEntries(tipos.map((t) => [t, 0]));
+        let acc = 0,
+          c = 0;
+        for (const r of rows) {
+          const t = String(r.tipo || "").toUpperCase();
+          if (counts[t] != null) counts[t]++;
+          if (typeof r.tiempo_respuesta_min === "number") {
+            acc += r.tiempo_respuesta_min;
+            c++;
+          }
+        }
+        const avg = c ? Math.round((acc / c) * 100) / 100 : "";
+        return [em, ...tipos.map((t) => counts[t]), avg];
+      });
+      const emisorAoA = [
+        ["Emisor", ...tipos.map((t) => `# ${t}`), "Promedio resp (min)"],
+        ...byEmisor,
+      ];
+
+      const asesoresSet = new Set(filtered.map((r) => r.asesor || ""));
+      const asesorRows = Array.from(asesoresSet)
+        .sort()
+        .map((as) => {
+          const rows = filtered.filter((r) => (r.asesor || "") === as);
+          const counts = Object.fromEntries(tipos.map((t) => [t, 0]));
+          for (const r of rows) {
+            const t = String(r.tipo || "").toUpperCase();
+            if (counts[t] != null) counts[t]++;
+          }
+          return [as || "(vacío)", ...tipos.map((t) => counts[t])];
+        });
+      const asesorAoA = [
+        ["Asesor", ...tipos.map((t) => `# ${t}`)],
+        ...asesorRows,
+      ];
+
+      const wb = XLSX.utils.book_new();
+      const wsGeneral = XLSX.utils.aoa_to_sheet(generalAoA);
+      const wsEmisor = XLSX.utils.aoa_to_sheet(emisorAoA);
+      const wsAsesor = XLSX.utils.aoa_to_sheet(asesorAoA);
+      XLSX.utils.book_append_sheet(wb, wsGeneral, "General");
+      XLSX.utils.book_append_sheet(wb, wsEmisor, "Por Emisor");
+      XLSX.utils.book_append_sheet(wb, wsAsesor, "Por Asesor");
+      const dateStamp = new Date()
+        .toISOString()
+        .slice(0, 19)
+        .replace(/[:T]/g, "-");
+      XLSX.writeFile(wb, `reporte-bitacora-${dateStamp}.xlsx`);
+    } catch (e) {}
+  }
 
   function clearFilters() {
     setSearchId("");
@@ -497,6 +650,12 @@ export default function BitacoraGroupedView({
           onClick={clearFilters}
         >
           Limpiar
+        </button>
+        <button
+          className="border rounded px-3 py-1 bg-gray-100"
+          onClick={onExport}
+        >
+          Exportar
         </button>
       </div>
       <div className="space-y-8">
