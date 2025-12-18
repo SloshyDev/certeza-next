@@ -16,9 +16,9 @@ const protectedRoutes = [
 ];
 
 // Rutas que son públicas y no requieren autenticación
-const publicRoutes = ["/auth/sign-in"];
+const publicRoutes = ["/", "/auth/sign-in"];
 
-export function middleware(req) {
+export async function middleware(req) {
   const { nextUrl } = req;
   const pathname = nextUrl.pathname;
 
@@ -27,11 +27,11 @@ export function middleware(req) {
     return NextResponse.next();
   }
 
-  // Verificar si el usuario está autenticado
-  const isAuthed = !!req.auth;
-
+  // Obtener la sesión completa con roles
+  const session = await auth();
+  
   // Si no está autenticado, redirigir al login
-  if (!isAuthed) {
+  if (!session) {
     const url = new URL("/auth/sign-in", req.url);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);
@@ -39,7 +39,7 @@ export function middleware(req) {
 
   // Verificar permisos de roles para rutas protegidas
   const match = protectedRoutes.find((r) => pathname.startsWith(r.path));
-  if (match && !hasRole(req.auth, match.roles)) {
+  if (match && !hasRole(session, match.roles)) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 

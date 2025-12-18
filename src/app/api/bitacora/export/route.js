@@ -18,7 +18,8 @@ export async function GET(req) {
   if (!session) return new Response("UNAUTHORIZED", { status: 401 });
   if (!hasRole(session, ["viewer", "editor", "admin"]))
     return new Response("FORBIDDEN", { status: 403 });
-  if (!isDbConfigured()) return new Response("DB_NOT_CONFIGURED", { status: 500 });
+  if (!isDbConfigured())
+    return new Response("DB_NOT_CONFIGURED", { status: 500 });
 
   const url = new URL(req.url);
   const now = new Date();
@@ -59,11 +60,21 @@ export async function GET(req) {
       [ids]
     );
     firstMap = new Map(
-      res.rows.map((r) => [r.bitacora_id, r.min_resp_ts ? new Date(r.min_resp_ts) : null])
+      res.rows.map((r) => [
+        r.bitacora_id,
+        r.min_resp_ts ? new Date(r.min_resp_ts) : null,
+      ])
     );
   }
 
-  const tipos = ["EMISION", "COTIZACION", "CANCELACION", "ENDOSO", "REEXPEDICION", "OTRO"];
+  const tipos = [
+    "EMISION",
+    "COTIZACION",
+    "CANCELACION",
+    "ENDOSO",
+    "REEXPEDICION",
+    "OTRO",
+  ];
   const generalAoA = [
     [
       "ID",
@@ -120,9 +131,9 @@ export async function GET(req) {
     return rows;
   })();
 
-  const emisorAoA = [["Emisor", ...tipos.map((t) => `# ${t}`), "Promedio resp (min)"]].concat(
-    byEmisorCalc
-  );
+  const emisorAoA = [
+    ["Emisor", ...tipos.map((t) => `# ${t}`), "Promedio resp (min)"],
+  ].concat(byEmisorCalc);
 
   const asesoresSet = new Set(data.map((r) => r.asesor || ""));
   const asesorAoA = [["Asesor", ...tipos.map((t) => `# ${t}`)]].concat(
@@ -140,9 +151,21 @@ export async function GET(req) {
   );
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(generalAoA), "General");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(emisorAoA), "Por Emisor");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(asesorAoA), "Por Asesor");
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet(generalAoA),
+    "General"
+  );
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet(emisorAoA),
+    "Por Emisor"
+  );
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet(asesorAoA),
+    "Por Asesor"
+  );
   const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
   const dateStamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
   return new Response(buf, {
@@ -155,4 +178,3 @@ export async function GET(req) {
     },
   });
 }
-
