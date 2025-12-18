@@ -289,6 +289,20 @@ export default function BitacoraGroupedView({
     } catch (e) {}
   }
 
+  useEffect(() => {
+    function handleExportTrigger() {
+      onExport();
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("bitacora-export", handleExportTrigger);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("bitacora-export", handleExportTrigger);
+      }
+    };
+  }, [filtered, groups, groupKeys]);
+
   function clearFilters() {
     setSearchId("");
     setSearchAsunto("");

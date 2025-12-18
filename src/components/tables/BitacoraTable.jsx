@@ -234,10 +234,15 @@ export default function BitacoraTable({
         cell: (info) => info.getValue() || "",
       }),
       columnHelper.accessor("tiempo_respuesta_min", {
-        header: () => "Resp. (min)",
+        header: () => "Resp. (hh:mm)",
         cell: (info) => {
           const v = info.getValue();
-          return v == null ? "" : v;
+          if (v == null) return "";
+          const h = Math.floor(Number(v) / 60);
+          const m = Math.abs(Number(v) % 60);
+          const hh = String(h).padStart(2, "0");
+          const mm = String(m).padStart(2, "0");
+          return `${hh}:${mm}`;
         },
         size: 120,
       }),

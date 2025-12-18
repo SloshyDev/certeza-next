@@ -3,6 +3,7 @@ import { getBitacoraTableData } from "@/lib/bitacora";
 import { auth } from "@/../auth";
 import { hasRole } from "@/lib/roles";
 import AddBitacoraButton from "@/components/AddBitacoraButton";
+import ExportBitacoraButton from "@/components/ExportBitacoraButton";
 import { redirect } from "next/navigation";
 
 function todayStr() {
@@ -40,7 +41,11 @@ export default async function Page(props) {
           <h1 className="text-xl font-semibold">Bitácora</h1>
           {canCreate ? <AddBitacoraButton /> : null}
         </div>
-        <form className="flex gap-2" action="/bitacora" method="get">
+        <form
+          className="flex gap-2 items-center"
+          action="/bitacora"
+          method="get"
+        >
           <input
             type="date"
             name="startDate"
@@ -56,6 +61,7 @@ export default async function Page(props) {
           <button className="border rounded px-3 py-1 bg-gray-100">
             Filtrar
           </button>
+          <ExportBitacoraButton />
         </form>
       </header>
       <BitacoraGroupedView
