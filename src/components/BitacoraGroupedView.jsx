@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import BitacoraTable from "@/components/tables/BitacoraTable";
 
 const TIPO_OPTIONS = [
