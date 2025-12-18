@@ -35,6 +35,12 @@ export default function BitacoraTable({
   const [expanded, setExpanded] = useState({});
   const [historyMap, setHistoryMap] = useState({});
   const [loadingMap, setLoadingMap] = useState({});
+  const [polizaInputMap, setPolizaInputMap] = useState({});
+  const [asesores, setAsesores] = useState([]);
+  const [asesorSelectMap, setAsesorSelectMap] = useState({});
+  const [polizaModalId, setPolizaModalId] = useState(null);
+  const [polizaModalNo, setPolizaModalNo] = useState("");
+  const [polizaModalAsesor, setPolizaModalAsesor] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -43,6 +49,13 @@ export default function BitacoraTable({
   useEffect(() => {
     setRows(Array.isArray(data) ? data : []);
   }, [data]);
+
+  useEffect(() => {
+    fetch("/api/asesores")
+      .then((r) => r.json())
+      .then((list) => setAsesores(Array.isArray(list) ? list : []))
+      .catch(() => {});
+  }, []);
 
   async function handleTipoChange(id, nextTipo) {
     if (!canEdit) return;
@@ -90,6 +103,33 @@ export default function BitacoraTable({
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error("delete-failed");
       setRows((prev) => prev.filter((r) => r.id !== id));
+    } catch (e) {
+      // no comments
+    }
+  }
+
+  async function handleAddPoliza(id, asesorId) {
+    const no_poliza = String(polizaInputMap[id] || polizaModalNo || "").trim();
+    if (!canEdit || !no_poliza) return;
+    try {
+      const res = await fetch("/api/polizas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bitacora_id: id,
+          asesor_id: Number(asesorId || polizaModalAsesor || 0),
+          no_poliza,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error("create-poliza-failed");
+      setRows((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, no_poliza } : r))
+      );
+      setPolizaInputMap((m) => ({ ...m, [id]: "" }));
+      setPolizaModalId(null);
+      setPolizaModalNo("");
+      setPolizaModalAsesor("");
     } catch (e) {
       // no comments
     }
@@ -194,10 +234,15 @@ export default function BitacoraTable({
         cell: (info) => info.getValue() || "",
       }),
       columnHelper.accessor("tiempo_respuesta_min", {
-        header: () => "Resp. (min)",
+        header: () => "Resp. (hh:mm)",
         cell: (info) => {
           const v = info.getValue();
-          return v == null ? "" : v;
+          if (v == null) return "";
+          const h = Math.floor(Number(v) / 60);
+          const m = Math.abs(Number(v) % 60);
+          const hh = String(h).padStart(2, "0");
+          const mm = String(m).padStart(2, "0");
+          return `${hh}:${mm}`;
         },
         size: 120,
       }),
@@ -206,10 +251,40 @@ export default function BitacoraTable({
         cell: (info) => info.getValue() || "",
         size: 140,
       }),
-      columnHelper.accessor("no_poliza", {
+      columnHelper.display({
+        id: "poliza",
         header: () => "Póliza",
-        cell: (info) => info.getValue() || "",
-        size: 140,
+        cell: ({ row }) => {
+          const id = row.original?.id;
+          const noPol = row.original?.no_poliza || "";
+          const tipo = String(row.original?.tipo || "")
+            .trim()
+            .toUpperCase();
+          const estatus = String(row.original?.estatus || "")
+            .trim()
+            .toUpperCase();
+          const isCompleto =
+            estatus.includes("COMPLETO") ||
+            estatus === "COMPLETADO" ||
+            estatus === "FINALIZADO";
+          const asesorId = row.original?.asesor_id;
+          const canInsert = tipo === "EMISION" && isCompleto && !noPol;
+          if (!canInsert) return noPol;
+          return (
+            <button
+              className="px-2 py-1 border rounded bg-gray-100"
+              onClick={() => {
+                setPolizaModalId(id);
+                setPolizaModalNo("");
+                setPolizaModalAsesor(String(asesorId || ""));
+              }}
+              disabled={!canEdit}
+            >
+              Agregar
+            </button>
+          );
+        },
+        size: 200,
       }),
     ],
     []
@@ -430,6 +505,83 @@ export default function BitacoraTable({
           </strong>
         </span>
       </div>
+      {polizaModalId != null ? (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setPolizaModalId(null)}
+          />
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-lg bg-white shadow-lg overflow-visible">
+              <div className="flex items-center justify-between border-b p-3">
+                <h3 className="text-lg font-semibold">Agregar póliza</h3>
+                <button
+                  className="px-2 py-1"
+                  onClick={() => setPolizaModalId(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">No. póliza</label>
+                  <input
+                    className="border rounded px-2 py-1"
+                    value={polizaModalNo}
+                    onChange={(e) => setPolizaModalNo(e.target.value)}
+                  />
+                </div>
+                {(() => {
+                  const rowSel = rows.find((r) => r.id === polizaModalId);
+                  if (rowSel && rowSel.asesor_id) return null;
+                  return (
+                    <div className="flex flex-col gap-1">
+                      <label className="text-sm">Asesor</label>
+                      <select
+                        className="border rounded px-2 py-1"
+                        value={polizaModalAsesor}
+                        onChange={(e) => setPolizaModalAsesor(e.target.value)}
+                      >
+                        <option value="">Selecciona asesor</option>
+                        {asesores.map((a) => (
+                          <option key={a.id} value={a.id}>
+                            {a.nombre}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })()}
+                <div className="flex items-center gap-2">
+                  <button
+                    className="px-3 py-1 border rounded bg-gray-100"
+                    disabled={
+                      !canEdit ||
+                      !String(polizaModalNo).trim() ||
+                      (!rows.find((r) => r.id === polizaModalId)?.asesor_id &&
+                        !Number(polizaModalAsesor || 0))
+                    }
+                    onClick={() => {
+                      const rowSel = rows.find((r) => r.id === polizaModalId);
+                      const aid =
+                        rowSel?.asesor_id || Number(polizaModalAsesor || 0);
+                      handleAddPoliza(polizaModalId, aid);
+                    }}
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    className="px-3 py-1 border rounded"
+                    onClick={() => setPolizaModalId(null)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
