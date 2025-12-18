@@ -43,22 +43,38 @@ export default async function Page(props) {
           <h1 className="text-2xl font-bold text-foreground">Bitácora</h1>
           {canCreate ? <AddBitacoraButton /> : null}
         </div>
-        <form className="flex gap-2" action="/bitacora" method="get">
-          <input
-            type="date"
-            name="startDate"
-            defaultValue={start}
-            className="border rounded px-2 py-1"
-          />
-          <input
-            type="date"
-            name="endDate"
-            defaultValue={end}
-            className="border rounded px-2 py-1"
-          />
-          <button className="border rounded px-3 py-1 bg-gray-100">
-            Filtrar
-          </button>
+        <form
+          className="flex flex-col sm:flex-row gap-3 w-full md:w-auto"
+          action="/bitacora"
+          method="get"
+        >
+          <div className="flex gap-2 w-full sm:w-auto">
+            <input
+              type="date"
+              name="startDate"
+              defaultValue={start}
+              className="flex-1 sm:w-auto h-10 rounded-lg border border-border bg-white/10 backdrop-blur-md px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+            />
+            <input
+              type="date"
+              name="endDate"
+              defaultValue={end}
+              className="flex-1 sm:w-auto h-10 rounded-lg border border-border bg-white/10 backdrop-blur-md px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+            />
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button className="flex-1 sm:w-auto h-10 px-4 rounded-lg bg-gray-800 text-white hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow-sm text-sm font-medium flex items-center justify-center gap-2">
+              <FunnelIcon className="h-4 w-4" />
+              Filtrar
+            </button>
+            <Link
+              href="/bitacora"
+              className="flex-1 sm:w-auto h-10 px-4 rounded-lg bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500 transition-colors shadow-sm text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <XMarkIcon className="h-4 w-4" />
+              Limpiar
+            </Link>
+          </div>
         </form>
       </header>
       <BitacoraGroupedView

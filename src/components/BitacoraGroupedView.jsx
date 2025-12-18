@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
 import BitacoraTable from "@/components/tables/BitacoraTable";
 
 const TIPO_OPTIONS = [
@@ -694,12 +694,6 @@ export default function BitacoraGroupedView({
         >
           <XMarkIcon className="h-4 w-4" />
           Limpiar
-        </button>
-        <button
-          className="border rounded px-3 py-1 bg-gray-100"
-          onClick={onExport}
-        >
-          Exportar
         </button>
       </div>
       <div className="fixed bottom-4 left-4 z-50">
