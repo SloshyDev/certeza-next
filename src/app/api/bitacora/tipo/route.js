@@ -21,7 +21,7 @@ const PayloadSchema = z.object({
 export async function PATCH(req) {
   const session = await auth();
   if (!session) return new Response("UNAUTHORIZED", { status: 401 });
-  if (!hasRole(session, ["admin", "editor"]))
+  if (!hasRole(session, ["admin", "editor", "emisor", "coordinador"]))
     return new Response("FORBIDDEN", { status: 403 });
 
   if (!isDbConfigured()) return Response.json({ ok: false }, { status: 500 });

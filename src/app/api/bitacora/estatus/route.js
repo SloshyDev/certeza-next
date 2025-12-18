@@ -21,20 +21,26 @@ const PayloadSchema = z.object({
 export async function PATCH(req) {
   const session = await auth();
   if (!session) return new Response("UNAUTHORIZED", { status: 401 });
-  if (!hasRole(session, ["admin", "editor"])) return new Response("FORBIDDEN", { status: 403 });
+  if (!hasRole(session, ["admin", "editor", "emisor", "coordinador"]))
+    return new Response("FORBIDDEN", { status: 403 });
   if (!isDbConfigured()) return Response.json({ ok: false }, { status: 500 });
 
   const json = await req.json();
   const parsed = PayloadSchema.safeParse(json);
   if (!parsed.success) {
-    return Response.json({ ok: false, error: parsed.error.flatten() }, { status: 400 });
+    return Response.json(
+      { ok: false, error: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
   const { id, estatus } = parsed.data;
 
-  const prevRes = await query(`SELECT estatus FROM bitacora WHERE id = $1`, [id]);
+  const prevRes = await query(`SELECT estatus FROM bitacora WHERE id = $1`, [
+    id,
+  ]);
   const prev = prevRes.rows[0]?.estatus ?? null;
 
-  if ((prev ?? '') === estatus) {
+  if ((prev ?? "") === estatus) {
     return Response.json({ ok: true, row: { id, estatus } });
   }
 

@@ -11,8 +11,30 @@ const protectedRoutes = [
   { path: "/admin", roles: ["admin"] },
   { path: "/editor", roles: ["editor", "admin"] },
   { path: "/viewer", roles: ["viewer", "editor", "admin"] },
-  { path: "/bitacora", roles: ["viewer", "editor", "admin", "emisor", "supervisor", "supervisor_emi"] },
-  { path: "/api/bitacora", roles: ["viewer", "editor", "admin", "emisor", "supervisor", "supervisor_emi"] },
+  {
+    path: "/bitacora",
+    roles: [
+      "viewer",
+      "editor",
+      "admin",
+      "emisor",
+      "supervisor",
+      "supervisor_emi",
+      "coordinador",
+    ],
+  },
+  {
+    path: "/api/bitacora",
+    roles: [
+      "viewer",
+      "editor",
+      "admin",
+      "emisor",
+      "supervisor",
+      "supervisor_emi",
+      "coordinador",
+    ],
+  },
 ];
 
 // Rutas que son públicas y no requieren autenticación
@@ -29,7 +51,7 @@ export async function middleware(req) {
 
   // Obtener la sesión completa con roles
   const session = await auth();
-  
+
   // Si no está autenticado, redirigir al login
   if (!session) {
     const url = new URL("/auth/sign-in", req.url);

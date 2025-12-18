@@ -46,8 +46,10 @@ export default async function Page(props) {
   }
   const data = await getBitacoraTableData(start, end, emisorEmail, emisorAlias);
   const canDelete = isAdmin;
-  const canCreate = isAdmin || isEditor;
-  const canEdit = isAdmin || isEditor;
+  const canCreate =
+    isAdmin || isEditor || isEmisor || userRoles.includes("coordinador");
+  const canEdit =
+    isAdmin || isEditor || isEmisor || userRoles.includes("coordinador");
 
   return (
     <section className="p-4 space-y-6 overflow-visible min-h-screen">

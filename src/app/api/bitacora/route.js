@@ -27,7 +27,7 @@ const CreateSchema = z.object({
 export async function POST(req) {
   const session = await auth();
   if (!session) return new Response("UNAUTHORIZED", { status: 401 });
-  if (!hasRole(session, ["admin", "editor"]))
+  if (!hasRole(session, ["admin", "editor", "emisor", "coordinador"]))
     return new Response("FORBIDDEN", { status: 403 });
   if (!isDbConfigured()) return Response.json({ ok: false }, { status: 500 });
   const json = await req.json();
