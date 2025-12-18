@@ -9,6 +9,7 @@ const TipoSchema = z.enum([
   "CANCELACION",
   "ENDOSO",
   "REEXPEDICION",
+  "RENOVACION",
   "OTRO",
 ]);
 
@@ -41,4 +42,3 @@ export async function PATCH(req) {
   const row = res.rows[0] || null;
   return Response.json({ ok: !!row, row });
 }
-

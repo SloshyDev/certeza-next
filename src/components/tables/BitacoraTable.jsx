@@ -18,7 +18,18 @@ const TIPO_OPTIONS = [
   "CANCELACION",
   "ENDOSO",
   "REEXPEDICION",
+  "RENOVACION",
   "OTRO",
+];
+
+const ESTATUS_OPTIONS = [
+  "COMPLETO",
+  "PENDIENTE ASESOR",
+  "PENDIENTE COMPAÑIA",
+  "PENDIENTE",
+  "ERROR",
+  "NO PROCEDE",
+  "CAMBIO EMISOR",
 ];
 
 const COLUMN_LABELS = {
@@ -55,6 +66,12 @@ export default function BitacoraTable({
   const [polizaModalId, setPolizaModalId] = useState(null);
   const [polizaModalNo, setPolizaModalNo] = useState("");
   const [polizaModalAsesor, setPolizaModalAsesor] = useState("");
+  const [showChangeEmisorId, setShowChangeEmisorId] = useState(null);
+  const [emisores, setEmisores] = useState([]);
+  const [changeEmisorForm, setChangeEmisorForm] = useState({
+    emisor: "",
+    motivo: "",
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -120,6 +137,61 @@ export default function BitacoraTable({
     } catch (e) {
       // no comments
     }
+  }
+
+  async function handleEstatusChange(id, nextStatus) {
+    if (!canEdit) return;
+    if (nextStatus === "CAMBIO EMISOR") {
+      setShowChangeEmisorId(id);
+      if (emisores.length === 0) {
+        try {
+          const res = await fetch("/api/emisores");
+          const list = await res.json();
+          if (Array.isArray(list)) setEmisores(list);
+        } catch (e) {}
+      }
+      return;
+    }
+    try {
+      const res = await fetch("/api/bitacora/estatus", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, estatus: nextStatus }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error("estatus-update-failed");
+      setRows((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, estatus: nextStatus } : r))
+      );
+    } catch (e) {}
+  }
+
+  async function submitChangeEmisor() {
+    const id = showChangeEmisorId;
+    if (!id) return;
+    const payload = {
+      id,
+      emisor: changeEmisorForm.emisor,
+      motivo: changeEmisorForm.motivo,
+    };
+    try {
+      const res = await fetch("/api/bitacora/emisor", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error("emisor-update-failed");
+      setRows((prev) =>
+        prev.map((r) =>
+          r.id === id
+            ? { ...r, emisor: json.row.emisor, estatus: json.row.estatus }
+            : r
+        )
+      );
+      setShowChangeEmisorId(null);
+      setChangeEmisorForm({ emisor: "", motivo: "" });
+    } catch (e) {}
   }
 
   async function handleAddPoliza(id, asesorId) {
@@ -260,10 +332,32 @@ export default function BitacoraTable({
         },
         size: 120,
       }),
-      columnHelper.accessor("estatus", {
+      columnHelper.display({
+        id: "estatus-edit",
         header: () => "Estatus",
-        cell: (info) => info.getValue() || "",
-        size: 140,
+        cell: ({ row }) => {
+          const id = row.original?.id;
+          const value = row.original?.estatus || "";
+          if (!canEdit) return value;
+          return (
+            <select
+              className="border border-border rounded px-2 py-1 bg-white/10 backdrop-blur-md text-foreground focus:bg-white/20 focus:outline-none"
+              value={value}
+              onChange={(e) => handleEstatusChange(id, e.target.value)}
+            >
+              {ESTATUS_OPTIONS.map((opt) => (
+                <option
+                  key={opt}
+                  value={opt}
+                  className="bg-background text-foreground"
+                >
+                  {opt}
+                </option>
+              ))}
+            </select>
+          );
+        },
+        size: 160,
       }),
       columnHelper.display({
         id: "poliza",
@@ -604,6 +698,82 @@ export default function BitacoraTable({
                   <button
                     className="px-3 py-1 border rounded"
                     onClick={() => setPolizaModalId(null)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {showChangeEmisorId != null ? (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowChangeEmisorId(null)}
+          />
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-lg bg-white shadow-lg overflow-visible">
+              <div className="flex items-center justify-between border-b p-3">
+                <h3 className="text-lg font-semibold">Cambio de emisor</h3>
+                <button
+                  className="px-2 py-1"
+                  onClick={() => setShowChangeEmisorId(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Nuevo emisor</label>
+                  <select
+                    className="border rounded px-2 py-1"
+                    value={changeEmisorForm.emisor}
+                    onChange={(e) =>
+                      setChangeEmisorForm((f) => ({
+                        ...f,
+                        emisor: e.target.value,
+                      }))
+                    }
+                  >
+                    <option value="">Selecciona</option>
+                    {emisores.map((em) => (
+                      <option key={em} value={em}>
+                        {em}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Motivo</label>
+                  <textarea
+                    className="border rounded px-2 py-1"
+                    rows={3}
+                    value={changeEmisorForm.motivo}
+                    onChange={(e) =>
+                      setChangeEmisorForm((f) => ({
+                        ...f,
+                        motivo: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="px-3 py-1 border rounded bg-gray-100"
+                    onClick={submitChangeEmisor}
+                    disabled={
+                      !canEdit ||
+                      !changeEmisorForm.emisor ||
+                      !changeEmisorForm.motivo
+                    }
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    className="px-3 py-1 border rounded"
+                    onClick={() => setShowChangeEmisorId(null)}
                   >
                     Cancelar
                   </button>

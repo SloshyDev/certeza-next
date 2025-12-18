@@ -9,6 +9,7 @@ const TipoEnum = z.enum([
   "CANCELACION",
   "ENDOSO",
   "REEXPEDICION",
+  "RENOVACION",
   "OTRO",
 ]);
 
@@ -32,7 +33,10 @@ export async function POST(req) {
   const json = await req.json();
   const parsed = CreateSchema.safeParse(json);
   if (!parsed.success) {
-    return Response.json({ ok: false, error: parsed.error.flatten() }, { status: 400 });
+    return Response.json(
+      { ok: false, error: parsed.error.flatten() },
+      { status: 400 }
+    );
   }
   const {
     emisor,
@@ -58,7 +62,16 @@ export async function POST(req) {
        NOW()
      )
      RETURNING id`,
-    [emisor, tipo, asesor, asunto, dia_llegada, hora_llegada, fecha_asignada, hora_asignado]
+    [
+      emisor,
+      tipo,
+      asesor,
+      asunto,
+      dia_llegada,
+      hora_llegada,
+      fecha_asignada,
+      hora_asignado,
+    ]
   );
   const row = insertRes.rows[0];
   const id = row?.id;

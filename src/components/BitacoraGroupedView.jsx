@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { XMarkIcon, DocumentArrowDownIcon } from "@heroicons/react/24/outline";
+import {
+  XMarkIcon,
+  DocumentArrowDownIcon,
+  Cog6ToothIcon,
+} from "@heroicons/react/24/outline";
 import BitacoraTable from "@/components/tables/BitacoraTable";
 
 const TIPO_OPTIONS = [
@@ -10,6 +14,7 @@ const TIPO_OPTIONS = [
   "CANCELACION",
   "ENDOSO",
   "REEXPEDICION",
+  "RENOVACION",
   "OTRO",
 ];
 
@@ -44,6 +49,10 @@ export default function BitacoraGroupedView({
   const [filterEstatus, setFilterEstatus] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
+  const [lastUpdatedTs, setLastUpdatedTs] = useState(null);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const POLL_INTERVAL_MS = 30000;
+  const [ringTick, setRingTick] = useState(0);
 
   useEffect(() => setMounted(true), []);
   useEffect(() => {
@@ -321,6 +330,29 @@ export default function BitacoraGroupedView({
     } catch (_) {}
   }
 
+  async function refreshNow() {
+    try {
+      const url = new URL(window.location.origin + "/api/bitacora/list");
+      url.searchParams.set("startDate", String(start));
+      url.searchParams.set("endDate", String(end));
+      setIsRefreshing(true);
+      const res = await fetch(url.toString(), { cache: "no-store" });
+      const rowsNew = await res.json();
+      if (Array.isArray(rowsNew)) {
+        setRows(rowsNew);
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const min = String(now.getMinutes()).padStart(2, "0");
+        const sec = String(now.getSeconds()).padStart(2, "0");
+        setLastUpdatedAt(`${hh}:${min}:${sec}`);
+        setLastUpdatedTs(now.getTime());
+      }
+    } catch (_) {
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
   useEffect(() => {
     const sid = searchId.trim();
     const sas = searchAsunto.trim();
@@ -351,43 +383,48 @@ export default function BitacoraGroupedView({
       typeof end === "string" &&
       start === end &&
       isTodayStr(end);
-    let timeoutId = null;
-    let aborted = false;
-    async function tick() {
-      if (aborted) return;
-      if (document.visibilityState !== "visible") {
-        timeoutId = setTimeout(tick, 60000);
-        return;
-      }
-      try {
-        setIsRefreshing(true);
-        const url = new URL(window.location.origin + "/api/bitacora/list");
-        url.searchParams.set("startDate", start);
-        url.searchParams.set("endDate", end);
-        const res = await fetch(url.toString(), { cache: "no-store" });
-        const rowsNew = await res.json();
-        if (Array.isArray(rowsNew)) {
-          setRows(rowsNew);
-          const now = new Date();
-          const hh = String(now.getHours()).padStart(2, "0");
-          const min = String(now.getMinutes()).padStart(2, "0");
-          const sec = String(now.getSeconds()).padStart(2, "0");
-          setLastUpdatedAt(`${hh}:${min}:${sec}`);
-        }
-      } catch (_) {
-      } finally {
-        setIsRefreshing(false);
-        timeoutId = setTimeout(tick, 45000);
-      }
-    }
+    let intervalId = null;
+    const onVis = () => {
+      if (document.visibilityState === "visible") refreshNow();
+    };
     if (shouldPoll) {
-      timeoutId = setTimeout(tick, 45000);
+      // inicializa el ring inmediatamente
+      setLastUpdatedTs(Date.now());
+      // primera actualización inmediata
+      refreshNow();
+      intervalId = setInterval(() => {
+        if (document.visibilityState === "visible") refreshNow();
+      }, POLL_INTERVAL_MS);
+      document.addEventListener("visibilitychange", onVis);
     }
     return () => {
-      aborted = true;
-      if (timeoutId) clearTimeout(timeoutId);
+      if (intervalId) clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVis);
     };
   }, [start, end]);
+
+  const nextInMs = useMemo(() => {
+    if (!lastUpdatedTs) return null;
+    const now = Date.now();
+    const until = lastUpdatedTs + POLL_INTERVAL_MS - now;
+    return until > 0 ? until : 0;
+  }, [lastUpdatedTs, ringTick]);
+
+  const ringProgress = useMemo(() => {
+    if (!lastUpdatedTs) return 0;
+    const elapsed = Math.max(0, (ringTick || Date.now()) - lastUpdatedTs);
+    return Math.min(1, elapsed / POLL_INTERVAL_MS);
+  }, [lastUpdatedTs, ringTick, POLL_INTERVAL_MS]);
+
+  useEffect(() => {
+    let id = null;
+    if (lastUpdatedTs) {
+      id = setInterval(() => setRingTick(Date.now()), 250);
+    }
+    return () => {
+      if (id) clearInterval(id);
+    };
+  }, [lastUpdatedTs]);
 
   async function submitForm(e) {
     e.preventDefault();
@@ -697,23 +734,63 @@ export default function BitacoraGroupedView({
         </button>
       </div>
       <div className="fixed bottom-4 left-4 z-50">
-        <span className="text-sm px-3 py-2 rounded-md border bg-black text-white shadow-md">
-          {isRefreshing
-            ? "Actualizando…"
-            : lastUpdatedAt
-            ? `Actualizado ${lastUpdatedAt}`
-            : "Sin actualizaciones"}
-        </span>
-      </div>
-      <div className="fixed bottom-16 left-4 z-50">
-        <button
-          className="flex items-center gap-2 rounded-md px-3 py-2 shadow-md bg-[#217346] text-white hover:bg-[#1b633e]"
-          onClick={onExport}
-          aria-label="Exportar Excel"
-        >
-          <DocumentArrowDownIcon className="h-5 w-5" aria-hidden="true" />
-          Exportar
-        </button>
+        <div className="relative">
+          <button
+            className="relative rounded-full p-2 shadow-md bg-[#7a1333] text-white border border-[#7a1333]"
+            onClick={() => setActionsOpen((v) => !v)}
+            aria-label="Acciones"
+          >
+            <svg width="36" height="36" viewBox="0 0 36 36" className="block">
+              <circle
+                cx="18"
+                cy="18"
+                r="16"
+                fill="none"
+                stroke="#ffffff55"
+                strokeWidth="4"
+              />
+              <circle
+                cx="18"
+                cy="18"
+                r="16"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="4"
+                strokeDasharray={2 * Math.PI * 16}
+                strokeDashoffset={2 * Math.PI * 16 * (1 - ringProgress)}
+                style={{ transition: "stroke-dashoffset 0.5s linear" }}
+              />
+            </svg>
+            <Cog6ToothIcon className="h-5 w-5 absolute inset-0 m-auto text-white" />
+          </button>
+          {actionsOpen ? (
+            <div className="absolute bottom-full left-0 mb-2 w-56 rounded-md border bg-white shadow-lg">
+              <div className="p-2 text-sm border-b">
+                {nextInMs != null
+                  ? `Siguiente en ${Math.ceil(nextInMs / 1000)}s`
+                  : "Siguiente: N/A"}
+              </div>
+              <button
+                className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+                onClick={() => {
+                  setActionsOpen(false);
+                  refreshNow();
+                }}
+              >
+                Refrescar ahora
+              </button>
+              <button
+                className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+                onClick={() => {
+                  setActionsOpen(false);
+                  onExport();
+                }}
+              >
+                Exportar Excel
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
       <div className="space-y-8">
         {groupKeys.map((key) => (
