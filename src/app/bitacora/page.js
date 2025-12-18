@@ -62,6 +62,12 @@ export default async function Page(props) {
             Filtrar
           </button>
           <ExportBitacoraButton />
+          <a
+            className="border rounded px-3 py-1 bg-gray-100"
+            href={`/api/bitacora/export?startDate=${start}&endDate=${end}`}
+          >
+            Exportar (servidor)
+          </a>
         </form>
       </header>
       <BitacoraGroupedView
