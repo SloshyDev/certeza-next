@@ -4,6 +4,8 @@ import { auth } from "@/../auth";
 import { hasRole } from "@/lib/roles";
 import AddBitacoraButton from "@/components/AddBitacoraButton";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { FunnelIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 function todayStr() {
   const now = new Date();
@@ -34,28 +36,44 @@ export default async function Page(props) {
   const canEdit = !!session && hasRole(session, ["admin", "editor"]);
 
   return (
-    <section className="p-4 space-y-4 overflow-visible min-h-screen">
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold">Bitácora</h1>
+    <section className="p-4 space-y-6 overflow-visible min-h-screen">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center justify-between md:justify-start gap-4 w-full md:w-auto">
+          <h1 className="text-2xl font-bold text-foreground">Bitácora</h1>
           {canCreate ? <AddBitacoraButton /> : null}
         </div>
-        <form className="flex gap-2" action="/bitacora" method="get">
-          <input
-            type="date"
-            name="startDate"
-            defaultValue={start}
-            className="border rounded px-2 py-1"
-          />
-          <input
-            type="date"
-            name="endDate"
-            defaultValue={end}
-            className="border rounded px-2 py-1"
-          />
-          <button className="border rounded px-3 py-1 bg-gray-100">
-            Filtrar
-          </button>
+        <form
+          className="flex flex-col sm:flex-row gap-3 w-full md:w-auto"
+          action="/bitacora"
+          method="get"
+        >
+          <div className="flex gap-2 w-full sm:w-auto">
+            <input
+              type="date"
+              name="startDate"
+              defaultValue={start}
+              className="flex-1 sm:w-auto h-10 rounded-lg border border-border bg-white/10 backdrop-blur-md px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+            />
+            <input
+              type="date"
+              name="endDate"
+              defaultValue={end}
+              className="flex-1 sm:w-auto h-10 rounded-lg border border-border bg-white/10 backdrop-blur-md px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
+            />
+          </div>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button className="flex-1 sm:w-auto h-10 px-4 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shadow-sm flex items-center justify-center gap-2 text-sm font-medium">
+              <FunnelIcon className="h-4 w-4" />
+              Filtrar
+            </button>
+            <Link
+              href="/bitacora"
+              className="flex-1 sm:w-auto h-10 px-4 rounded-lg bg-muted text-white hover:bg-muted/90 transition-colors shadow-sm flex items-center justify-center gap-2 text-sm font-medium"
+            >
+              <XMarkIcon className="h-4 w-4" />
+              Limpiar
+            </Link>
+          </div>
         </form>
       </header>
       <BitacoraGroupedView

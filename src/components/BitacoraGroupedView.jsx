@@ -1,5 +1,7 @@
 "use client";
+
 import { useMemo, useState, useEffect } from "react";
+import { DocumentArrowDownIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import BitacoraTable from "@/components/tables/BitacoraTable";
 
 const TIPO_OPTIONS = [
@@ -142,6 +144,15 @@ export default function BitacoraGroupedView({
     setFilterAsesor("");
     setFilterTipo("");
     setFilterEstatus("");
+  }
+
+  function onExport() {
+    try {
+      const url = new URL(window.location.origin + "/api/bitacora/export");
+      url.searchParams.set("startDate", String(start));
+      url.searchParams.set("endDate", String(end));
+      window.location.href = url.toString();
+    } catch (_) {}
   }
 
   useEffect(() => {
@@ -420,83 +431,122 @@ export default function BitacoraGroupedView({
         </div>
       ) : null}
       <div className="flex flex-wrap items-end gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-xs px-2 py-1 rounded border">
-            {isRefreshing
-              ? "Actualizando…"
-              : lastUpdatedAt
-              ? `Actualizado ${lastUpdatedAt}`
-              : "Sin actualizaciones"}
-          </span>
-        </div>
         <div className="flex flex-col gap-1">
-          <label className="text-sm">Buscar por ID</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            Buscar por ID
+          </label>
           <input
-            className="border rounded px-2 py-1"
+            className="h-10 border border-border rounded-lg px-3 bg-white/10 backdrop-blur-md text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent text-sm w-32"
             placeholder="Ej. 123"
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-sm">Buscar por asunto</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            Buscar por asunto
+          </label>
           <input
-            className="border rounded px-2 py-1"
+            className="h-10 border border-border rounded-lg px-3 bg-white/10 backdrop-blur-md text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent text-sm w-48"
             placeholder="Texto en asunto"
             value={searchAsunto}
             onChange={(e) => setSearchAsunto(e.target.value)}
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-sm">Asesor</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            Asesor
+          </label>
           <select
-            className="border rounded px-2 py-1"
+            className="h-10 border border-border rounded-lg px-3 bg-white/10 backdrop-blur-md text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent text-sm min-w-[140px]"
             value={filterAsesor}
             onChange={(e) => setFilterAsesor(e.target.value)}
           >
-            <option value="">Todos</option>
+            <option value="" className="bg-background text-foreground">
+              Todos
+            </option>
             {asesorOptions.map((a) => (
-              <option key={a} value={a}>
+              <option
+                key={a}
+                value={a}
+                className="bg-background text-foreground"
+              >
                 {a}
               </option>
             ))}
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-sm">Tipo</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            Tipo
+          </label>
           <select
-            className="border rounded px-2 py-1"
+            className="h-10 border border-border rounded-lg px-3 bg-white/10 backdrop-blur-md text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent text-sm min-w-[140px]"
             value={filterTipo}
             onChange={(e) => setFilterTipo(e.target.value)}
           >
-            <option value="">Todos</option>
+            <option value="" className="bg-background text-foreground">
+              Todos
+            </option>
             {TIPO_OPTIONS.map((t) => (
-              <option key={t} value={t}>
+              <option
+                key={t}
+                value={t}
+                className="bg-background text-foreground"
+              >
                 {t}
               </option>
             ))}
           </select>
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-sm">Estatus</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            Estatus
+          </label>
           <select
-            className="border rounded px-2 py-1"
+            className="h-10 border border-border rounded-lg px-3 bg-white/10 backdrop-blur-md text-foreground focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent text-sm min-w-[140px]"
             value={filterEstatus}
             onChange={(e) => setFilterEstatus(e.target.value)}
           >
-            <option value="">Todos</option>
+            <option value="" className="bg-background text-foreground">
+              Todos
+            </option>
             {estatusOptions.map((s) => (
-              <option key={s} value={s}>
+              <option
+                key={s}
+                value={s}
+                className="bg-background text-foreground"
+              >
                 {s}
               </option>
             ))}
           </select>
         </div>
         <button
-          className="border rounded px-3 py-1 bg-gray-100"
+          className="h-10 px-4 rounded-lg bg-muted text-white hover:bg-muted/90 transition-colors shadow-sm flex items-center justify-center gap-2 text-sm font-medium"
           onClick={clearFilters}
         >
+          <XMarkIcon className="h-4 w-4" />
           Limpiar
+        </button>
+      </div>
+      <div className="fixed bottom-4 left-4 z-50">
+        <span className="text-sm px-3 py-2 rounded-md border bg-black text-white shadow-md">
+          {isRefreshing
+            ? "Actualizando…"
+            : lastUpdatedAt
+            ? `Actualizado ${lastUpdatedAt}`
+            : "Sin actualizaciones"}
+        </span>
+      </div>
+      <div className="fixed bottom-16 left-4 z-50">
+        <button
+          className="flex items-center gap-2 rounded-md px-3 py-2 shadow-md bg-[#217346] text-white hover:bg-[#1b633e]"
+          onClick={onExport}
+          aria-label="Exportar Excel"
+        >
+          <DocumentArrowDownIcon className="h-5 w-5" aria-hidden="true" />
+          Exportar
         </button>
       </div>
       <div className="space-y-8">

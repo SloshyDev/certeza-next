@@ -21,6 +21,20 @@ const TIPO_OPTIONS = [
   "OTRO",
 ];
 
+const COLUMN_LABELS = {
+  emisor: "Emisor",
+  id: "ID",
+  hist: "Historial",
+  acciones: "Acciones",
+  llegada: "Llegada",
+  asesor: "Asesor",
+  "tipo-edit": "Tipo",
+  asunto: "Asunto",
+  tiempo_respuesta_min: "Resp. (min)",
+  estatus: "Estatus",
+  no_poliza: "Póliza",
+};
+
 export default function BitacoraTable({
   data,
   showEmisor = true,
@@ -231,9 +245,9 @@ export default function BitacoraTable({
 
   if (!mounted) return null;
   return (
-    <div className="overflow-visible rounded border border-gray-200">
-      <table className="min-w-full text-sm">
-        <thead className="bg-muted/10">
+    <div className="overflow-visible rounded border-none md:border md:border-border">
+      <table className="min-w-full text-sm block md:table">
+        <thead className="bg-muted/10 hidden md:table-header-group">
           {table.getHeaderGroups().map((hg) => (
             <tr key={hg.id}>
               {hg.headers.map((header) => (
@@ -263,115 +277,132 @@ export default function BitacoraTable({
             </tr>
           ))}
         </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <Fragment key={row.id}>
-              <tr className="border-t border-border">
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="px-3 py-2 text-foreground align-top"
-                  >
-                    {cell.getIsGrouped() ? (
-                      <button
-                        className="mr-2 text-accent"
-                        onClick={row.getToggleExpandedHandler()}
-                      >
-                        {row.getIsExpanded() ? "−" : "+"}
-                      </button>
-                    ) : null}
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-              {expanded[row.original?.id] ? (
-                <tr>
-                  <td
-                    colSpan={table.getAllColumns().length}
-                    className="px-3 py-2 bg-muted/5"
-                  >
-                    {loadingMap[row.original?.id] ? (
-                      <div className="text-sm">Cargando...</div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <div className="font-medium mb-2">
-                            Historial de póliza
-                          </div>
-                          <ul className="space-y-2">
-                            {(
-                              historyMap[row.original?.id]?.polizas_history ||
-                              []
-                            ).map((h) => (
-                              <li
-                                key={h.id}
-                                className="border border-border rounded p-2"
-                              >
-                                <div className="text-xs opacity-70">
-                                  {h.fecha_modificacion?.toString() || ""}
-                                </div>
-                                <div className="text-sm">
-                                  {h.operacion} {h.campo_modificado}
-                                </div>
-                                <div className="text-sm">
-                                  {h.valor_anterior} → {h.valor_nuevo}
-                                </div>
-                                <div className="text-xs">
-                                  {h.usuario} · {h.no_poliza}
-                                </div>
-                              </li>
-                            ))}
-                            {(
-                              historyMap[row.original?.id]?.polizas_history ||
-                              []
-                            ).length === 0 ? (
-                              <div className="text-sm opacity-70">
-                                Sin cambios de póliza
-                              </div>
-                            ) : null}
-                          </ul>
-                        </div>
-                        <div>
-                          <div className="font-medium mb-2">
-                            Historial de bitácora
-                          </div>
-                          <ul className="space-y-2">
-                            {(
-                              historyMap[row.original?.id]
-                                ?.bitacora_historial || []
-                            ).map((h, idx) => (
-                              <li
-                                key={idx}
-                                className="border border-border rounded p-2"
-                              >
-                                <div className="text-xs opacity-70">
-                                  {h.fecha_actualizacion?.toString() || ""}
-                                </div>
-                                <div className="text-sm">
-                                  {h.estatus_anterior} → {h.estatus_nuevo}
-                                </div>
-                                <div className="text-xs">
-                                  {h.actualizado_por}
-                                </div>
-                              </li>
-                            ))}
-                            {(
-                              historyMap[row.original?.id]
-                                ?.bitacora_historial || []
-                            ).length === 0 ? (
-                              <div className="text-sm opacity-70">
-                                Sin cambios en bitácora
-                              </div>
-                            ) : null}
-                          </ul>
+        <tbody className="block md:table-row-group">
+          {table.getRowModel().rows.map((row) => {
+            const isExpanded = expanded[row.original?.id];
+            return (
+              <Fragment key={row.id}>
+                <tr
+                  className={`block md:table-row border border-border md:border-0 md:border-t mb-4 md:mb-0 ${
+                    isExpanded ? "rounded-t-lg border-b-0" : "rounded-lg"
+                  }`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="px-3 py-2 text-foreground align-top block md:table-cell border-b border-border last:border-0 md:border-0"
+                    >
+                      <div className="flex justify-between items-center md:block w-full">
+                        <span className="md:hidden font-medium text-muted-foreground mr-2">
+                          {COLUMN_LABELS[cell.column.id] || cell.column.id}
+                        </span>
+                        <div className="text-right md:text-left flex-1 md:flex-none">
+                          {cell.getIsGrouped() ? (
+                            <button
+                              className="mr-2 text-accent"
+                              onClick={row.getToggleExpandedHandler()}
+                            >
+                              {row.getIsExpanded() ? "−" : "+"}
+                            </button>
+                          ) : null}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </div>
                       </div>
-                    )}
-                  </td>
+                    </td>
+                  ))}
                 </tr>
-              ) : null}
-            </Fragment>
-          ))}
+                {isExpanded ? (
+                  <tr className="block md:table-row border border-border md:border-0 rounded-b-lg mb-4 md:mb-0 border-t-0">
+                    <td
+                      colSpan={table.getAllColumns().length}
+                      className="px-3 py-2 bg-muted/5 block md:table-cell rounded-b-lg md:rounded-none"
+                    >
+                      {loadingMap[row.original?.id] ? (
+                        <div className="text-sm">Cargando...</div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <div className="font-medium mb-2">
+                              Historial de póliza
+                            </div>
+                            <ul className="space-y-2">
+                              {(
+                                historyMap[row.original?.id]?.polizas_history ||
+                                []
+                              ).map((h) => (
+                                <li
+                                  key={h.id}
+                                  className="border border-border rounded p-2"
+                                >
+                                  <div className="text-xs opacity-70">
+                                    {h.fecha_modificacion?.toString() || ""}
+                                  </div>
+                                  <div className="text-sm">
+                                    {h.operacion} {h.campo_modificado}
+                                  </div>
+                                  <div className="text-sm">
+                                    {h.valor_anterior} → {h.valor_nuevo}
+                                  </div>
+                                  <div className="text-xs">
+                                    {h.usuario} · {h.no_poliza}
+                                  </div>
+                                </li>
+                              ))}
+                              {(
+                                historyMap[row.original?.id]?.polizas_history ||
+                                []
+                              ).length === 0 ? (
+                                <div className="text-sm opacity-70">
+                                  Sin cambios de póliza
+                                </div>
+                              ) : null}
+                            </ul>
+                          </div>
+                          <div>
+                            <div className="font-medium mb-2">
+                              Historial de bitácora
+                            </div>
+                            <ul className="space-y-2">
+                              {(
+                                historyMap[row.original?.id]
+                                  ?.bitacora_historial || []
+                              ).map((h, idx) => (
+                                <li
+                                  key={idx}
+                                  className="border border-border rounded p-2"
+                                >
+                                  <div className="text-xs opacity-70">
+                                    {h.fecha_actualizacion?.toString() || ""}
+                                  </div>
+                                  <div className="text-sm">
+                                    {h.estatus_anterior} → {h.estatus_nuevo}
+                                  </div>
+                                  <div className="text-xs">
+                                    {h.actualizado_por}
+                                  </div>
+                                </li>
+                              ))}
+                              {(
+                                historyMap[row.original?.id]
+                                  ?.bitacora_historial || []
+                              ).length === 0 ? (
+                                <div className="text-sm opacity-70">
+                                  Sin cambios en bitácora
+                                </div>
+                              ) : null}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ) : null}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
       <div className="flex items-center justify-between p-2 border-t border-border">
