@@ -72,6 +72,9 @@ export default function BitacoraTable({
     emisor: "",
     motivo: "",
   });
+  const [respondidoModalId, setRespondidoModalId] = useState(null);
+  const [respondidoFecha, setRespondidoFecha] = useState("");
+  const [respondidoHora, setRespondidoHora] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -163,6 +166,51 @@ export default function BitacoraTable({
       setRows((prev) =>
         prev.map((r) => (r.id === id ? { ...r, estatus: nextStatus } : r))
       );
+    } catch (e) {}
+  }
+
+  async function handleSetRespondido(id) {
+    const now = new Date();
+    const yyyy = String(now.getFullYear());
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    const hh = String(now.getHours()).padStart(2, "0");
+    const min = String(now.getMinutes()).padStart(2, "0");
+    setRespondidoModalId(id);
+    setRespondidoFecha(`${yyyy}-${mm}-${dd}`);
+    setRespondidoHora(`${hh}:${min}`);
+  }
+
+  async function submitRespondido() {
+    const id = respondidoModalId;
+    if (!id || !canEdit) return;
+    const fecha = String(respondidoFecha || "").trim();
+    const hora = String(respondidoHora || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha) || !/^\d{2}:\d{2}$/.test(hora))
+      return;
+    try {
+      const res = await fetch("/api/bitacora/respondido", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          fecha_respondido: fecha,
+          hora_respondido: hora,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error("respondido-update-failed");
+      const row = json.row;
+      setRows((prev) =>
+        prev.map((r) =>
+          r.id === id
+            ? { ...r, tiempo_respuesta_min: row.tiempo_respuesta_min }
+            : r
+        )
+      );
+      setRespondidoModalId(null);
+      setRespondidoFecha("");
+      setRespondidoHora("");
     } catch (e) {}
   }
 
@@ -323,7 +371,18 @@ export default function BitacoraTable({
         header: () => "Resp. (hh:mm)",
         cell: (info) => {
           const v = info.getValue();
-          if (v == null) return "";
+          if (v == null) {
+            const id = info.row.original?.id;
+            return (
+              <button
+                className="px-2 py-1 border rounded bg-gray-100"
+                disabled={!canEdit}
+                onClick={() => handleSetRespondido(id)}
+              >
+                Añadir resp.
+              </button>
+            );
+          }
           const h = Math.floor(Number(v) / 60);
           const m = Math.abs(Number(v) % 60);
           const hh = String(h).padStart(2, "0");
@@ -698,6 +757,64 @@ export default function BitacoraTable({
                   <button
                     className="px-3 py-1 border rounded"
                     onClick={() => setPolizaModalId(null)}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {respondidoModalId != null ? (
+        <div className="fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setRespondidoModalId(null)}
+          />
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-lg bg-white shadow-lg overflow-visible">
+              <div className="flex items-center justify-between border-b p-3">
+                <h3 className="text-lg font-semibold">
+                  Añadir primera respuesta
+                </h3>
+                <button
+                  className="px-2 py-1"
+                  onClick={() => setRespondidoModalId(null)}
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Fecha respondido</label>
+                  <input
+                    type="date"
+                    className="border rounded px-2 py-1"
+                    value={respondidoFecha}
+                    onChange={(e) => setRespondidoFecha(e.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm">Hora respondido</label>
+                  <input
+                    type="time"
+                    className="border rounded px-2 py-1"
+                    value={respondidoHora}
+                    onChange={(e) => setRespondidoHora(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    className="px-3 py-1 border rounded bg-gray-100"
+                    disabled={!canEdit}
+                    onClick={submitRespondido}
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    className="px-3 py-1 border rounded"
+                    onClick={() => setRespondidoModalId(null)}
                   >
                     Cancelar
                   </button>

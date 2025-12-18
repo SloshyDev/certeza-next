@@ -16,8 +16,6 @@ function normDate(v, fb) {
 export async function GET(req) {
   const session = await auth();
   if (!session) return new Response("UNAUTHORIZED", { status: 401 });
-  if (!hasRole(session, ["viewer", "editor", "admin"]))
-    return new Response("FORBIDDEN", { status: 403 });
   if (!isDbConfigured())
     return new Response("DB_NOT_CONFIGURED", { status: 500 });
 
