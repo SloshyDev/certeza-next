@@ -35,6 +35,10 @@ const protectedRoutes = [
       "coordinador",
     ],
   },
+  {
+    path: "/renovaciones",
+    roles: ["viewer", "emisor", "admin", "supervisor", "coordinador"],
+  },
 ];
 
 // Rutas que son públicas y no requieren autenticación

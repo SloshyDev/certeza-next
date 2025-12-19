@@ -6,6 +6,7 @@ import {
   ArrowRightStartOnRectangleIcon,
   Bars3Icon,
   ClipboardDocumentListIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/20/solid";
 import Logo from "../components/ui/Logo";
 import Link from "next/link";
@@ -61,6 +62,13 @@ export default async function RootLayout({ children }) {
                       />
                       Bitácora
                     </Link>
+                    <Link href="/renovaciones" className="btn-secondary gap-2">
+                      <ArrowPathIcon
+                        className="h-4 w-4 text-foreground"
+                        aria-hidden="true"
+                      />
+                      Renovaciones
+                    </Link>
                     <Link href="/admin" className="btn-secondary gap-2">
                       <Cog6ToothIcon
                         className="h-4 w-4 text-foreground"
@@ -97,6 +105,16 @@ export default async function RootLayout({ children }) {
                             aria-hidden="true"
                           />
                           Bitácora
+                        </Link>
+                        <Link
+                          href="/renovaciones"
+                          className="btn-secondary w-full mt-2 gap-2"
+                        >
+                          <ArrowPathIcon
+                            className="h-4 w-4 text-foreground"
+                            aria-hidden="true"
+                          />
+                          Renovaciones
                         </Link>
                         <Link
                           href="/admin"
