@@ -15,6 +15,8 @@ import BarsLoader from "@/components/charts/BarsLoader";
 import TypesPieLoader from "@/components/charts/TypesPieLoader";
 import HeatmapLoader from "@/components/charts/HeatmapLoader";
 import EmisorCharts from "@/components/charts/EmisorCharts";
+import RenovacionesCharts from "@/components/charts/RenovacionesCharts";
+import { getRenovacionesStats, getRenovacionesByMes } from "@/lib/renovaciones";
 
 export default async function Home(props) {
   const session = await auth();
@@ -61,6 +63,10 @@ export default async function Home(props) {
     session && dbReady ? await getTiposTotals(start, end) : [];
   const horaLlegadaSeries =
     session && dbReady ? await getHoraLlegadaSeries(start, end) : [];
+  const renovacionesStats =
+    session && dbReady ? await getRenovacionesStats() : [];
+  const renovacionesByMes =
+    session && dbReady ? await getRenovacionesByMes() : [];
 
   const rawTipos = searchParams.tipo;
   const tiposArray = Array.isArray(rawTipos)
@@ -272,6 +278,14 @@ export default async function Home(props) {
               )}
             </div>
           ) : null}
+
+          {/* Renovaciones Section */}
+          {dbReady && (
+            <RenovacionesCharts
+              stats={renovacionesStats}
+              byMes={renovacionesByMes}
+            />
+          )}
         </div>
       </main>
     </div>

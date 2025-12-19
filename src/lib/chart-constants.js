@@ -18,4 +18,12 @@ export const TYPE_COLORS = {
   REEXPEDICION: "#f87171",
   REEXPEDICON: "#f87171", // Typo support
   ENDOSO: "#c27aff",
+  RENOVACION: "#502e3e",
+};
+
+export const RENOVATION_STATUS_COLORS = {
+  CANCELADA: "#fbbf24",
+  REEXPEDIDA: "#f87171",
+  COLOCADA: "#04e995",
+  PENDIENTE: "#9ca3af", // gray-400 equivalent
 };

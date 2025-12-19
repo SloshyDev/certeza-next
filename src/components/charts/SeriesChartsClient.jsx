@@ -294,14 +294,7 @@ export function StackedBarsByAsesorClient({ data, start, end }) {
   const BAR_W = Math.max(48, ((vbw - 2 * p) / nx) * 0.6);
   const xPos = (i) => p + (i + 0.5) * ((vbw - 2 * p) / nx);
   const yPos = (v) => h - p - (v * (h - 2 * p)) / maxY;
-  const TYPE_COLORS = {
-    COTIZACION: "#3892ff",
-    EMISION: "#04e995",
-    CANCELACION: "#fbbf24",
-    REEXPEDICION: "#f87171",
-    REEXPEDICON: "#f87171",
-    ENDOSO: "#c27aff",
-  };
+
   const colorFor = (t, i) =>
     TYPE_COLORS[t] || CHART_PALETTE[i % CHART_PALETTE.length];
   const stackedRects = asesores.map((a, ai) => {
@@ -614,14 +607,7 @@ export function PieTiposClient({ data }) {
   const r = size / 2;
   const r0 = r - thickness;
   const total = data.reduce((a, b) => a + (b.total || 0), 0) || 1;
-  const TYPE_COLORS = {
-    COTIZACION: "#3892ff",
-    EMISION: "#04e995",
-    CANCELACION: "#fbbf24",
-    REEXPEDICION: "#f87171",
-    REEXPEDICON: "#f87171",
-    ENDOSO: "#c27aff",
-  };
+
   const slices = data.map((d, i) => ({
     color:
       TYPE_COLORS[(d.tipo || "").toUpperCase()] ||

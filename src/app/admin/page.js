@@ -18,6 +18,7 @@ import {
   UsersIcon,
   CogIcon,
 } from "@heroicons/react/24/outline";
+import { redirect } from "next/navigation";
 
 export default async function AdminPage() {
   const session = await auth();
@@ -73,6 +74,8 @@ export default async function AdminPage() {
       </div>
     </div>
   );
+  // Redirigir a la página de gestión de usuarios por defecto
+  redirect("/admin/users");
 }
 
 function UsersList({ users, roles }) {

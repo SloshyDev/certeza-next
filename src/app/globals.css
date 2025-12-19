@@ -139,12 +139,14 @@
   .surface[data-selected="true"][data-type="REEXPEDICON"] { background-color: #f87171; color: #ffffff; border-color: transparent; }
   .surface[data-selected="true"][data-type="REEXPEDICION"] { background-color: #f87171; color: #ffffff; border-color: transparent; }
   .surface[data-selected="true"][data-type="ENDOSO"] { background-color: #c27aff; color: #ffffff; border-color: transparent; }
+  .surface[data-selected="true"][data-type="RENOVACION"] { background-color: #502e3e; color: #ffffff; border-color: transparent; }
   .surface[data-selected="true"][data-type="COTIZACION"]::before { background-color: #3892ff; }
   .surface[data-selected="true"][data-type="EMISION"]::before { background-color: #04e995; }
   .surface[data-selected="true"][data-type="CANCELACION"]::before { background-color: #fbbf24; }
   .surface[data-selected="true"][data-type="REEXPEDICON"]::before { background-color: #f87171; }
   .surface[data-selected="true"][data-type="REEXPEDICION"]::before { background-color: #f87171; }
   .surface[data-selected="true"][data-type="ENDOSO"]::before { background-color: #c27aff; }
+  .surface[data-selected="true"][data-type="RENOVACION"]::before { background-color: #502e3e; }
 
   .dark .surface[data-selected="true"][data-type="COTIZACION"] { background-color: rgba(56, 146, 255, 0.15); color: #ffffff; border-color: #3892ff; }
   .dark .surface[data-selected="true"][data-type="EMISION"] { background-color: rgba(4, 233, 149, 0.15); color: #ffffff; border-color: #04e995; }
@@ -152,6 +154,7 @@
   .dark .surface[data-selected="true"][data-type="REEXPEDICON"],
   .dark .surface[data-selected="true"][data-type="REEXPEDICION"] { background-color: rgba(248, 113, 113, 0.15); color: #ffffff; border-color: #f87171; }
   .dark .surface[data-selected="true"][data-type="ENDOSO"] { background-color: rgba(194, 122, 255, 0.15); color: #ffffff; border-color: #c27aff; }
+  .dark .surface[data-selected="true"][data-type="RENOVACION"] { background-color: rgba(80, 46, 62, 0.4); color: #ffffff; border-color: #502e3e; }
 
   .link {
     @apply underline underline-offset-4 decoration-primary hover:opacity-80;
