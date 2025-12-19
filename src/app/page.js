@@ -114,6 +114,7 @@ export default async function Home(props) {
   }
 
   const displayName = session.user?.alias ?? session.user?.email;
+  const hasViewerRole = (session.user?.roles || []).includes("viewer");
 
   return (
     <div className="py-6">
@@ -219,16 +220,18 @@ export default async function Home(props) {
               )}
             </div>
           )}
-          <div className="mt-10">
-            <h2 className="text-xl font-semibold">Actividad por emisor</h2>
-            {!dbReady ? (
-              <p className="mt-2 opacity-80">
-                Configura DATABASE_URL para consultar la base de datos.
-              </p>
-            ) : (
-              <EmisorCharts data={emisorTipoView} start={start} end={end} />
-            )}
-          </div>
+          {!hasViewerRole && (
+            <div className="mt-10">
+              <h2 className="text-xl font-semibold">Actividad por emisor</h2>
+              {!dbReady ? (
+                <p className="mt-2 opacity-80">
+                  Configura DATABASE_URL para consultar la base de datos.
+                </p>
+              ) : (
+                <EmisorCharts data={emisorTipoView} start={start} end={end} />
+              )}
+            </div>
+          )}
           <div className="mt-10">
             <h2 className="text-xl font-semibold">Análisis detallado</h2>
             {!dbReady ? (
