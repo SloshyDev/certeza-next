@@ -127,6 +127,60 @@ export async function getRenovaciones(filters = {}) {
 }
 
 /**
+ * Obtiene el listado detallado de todas las renovaciones con filtros opcionales, sin paginación.
+ * @param {Object} filters
+ * @param {string} [filters.mes]
+ * @param {string} [filters.estatus]
+ * @param {string} [filters.asesor]
+ * @param {string} [filters.poliza]
+ * @returns {Promise<Array<any>>}
+ */
+export async function getAllRenovacionesForExport(filters = {}) {
+  if (!isDbConfigured()) return [];
+
+  const conditions = [];
+  const params = [];
+  let queryStr = `
+    SELECT 
+      r.id,
+      r.poliza,
+      r.mes,
+      COALESCE(r.estatus, 'Sin Estatus') as estatus,
+      COALESCE(a.nombre, 'Sin Asesor') as asesor_nombre
+    FROM renovaciones r
+    LEFT JOIN asesor a ON r.asesor_id = a.id
+  `;
+
+  if (filters.mes) {
+    params.push(filters.mes);
+    conditions.push(`r.mes = $${params.length}`);
+  }
+  if (filters.estatus) {
+    params.push(filters.estatus);
+    conditions.push(`r.estatus = $${params.length}`);
+  }
+  if (filters.poliza) {
+    params.push(`%${filters.poliza}%`);
+    conditions.push(`r.poliza ILIKE $${params.length}`);
+  }
+  if (filters.asesor) {
+    params.push(`%${filters.asesor}%`);
+    conditions.push(`a.nombre ILIKE $${params.length}`);
+  }
+
+  if (conditions.length > 0) {
+    const whereClause = ` WHERE ` + conditions.join(" AND ");
+    queryStr += whereClause;
+  }
+
+  queryStr += ` ORDER BY r.mes DESC, r.id DESC`;
+
+  const res = await query(queryStr, params);
+
+  return res.rows;
+}
+
+/**
  * Obtiene la lista única de meses disponibles en renovaciones.
  */
 export async function getRenovacionesMeses() {

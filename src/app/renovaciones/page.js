@@ -5,8 +5,10 @@ import {
   getRenovacionesMeses,
   getRenovacionesStats,
   getRenovacionesByMes,
+  getAllRenovacionesForExport,
 } from "@/lib/renovaciones";
 import { listAsesores } from "@/lib/asesor";
+import { RENOVATION_STATUS_COLORS } from "@/lib/chart-constants";
 import Link from "next/link";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 
@@ -30,13 +32,15 @@ export default async function RenovacionesPage({ searchParams }) {
     limit: 20,
   };
 
-  const [dataResult, meses, asesores, stats, byMes] = await Promise.all([
-    getRenovaciones(filters),
-    getRenovacionesMeses(),
-    listAsesores(),
-    getRenovacionesStats(),
-    getRenovacionesByMes(),
-  ]);
+  const [dataResult, meses, asesores, stats, byMes, allDataForExport] =
+    await Promise.all([
+      getRenovaciones(filters),
+      getRenovacionesMeses(),
+      listAsesores(),
+      getRenovacionesStats(),
+      getRenovacionesByMes(),
+      getAllRenovacionesForExport(filters),
+    ]);
 
   const { data, total, pages } = dataResult;
 
@@ -216,22 +220,29 @@ export default async function RenovacionesPage({ searchParams }) {
       </main>
 
       {/* Botón Flotante de Exportar */}
-      <ExportButton data={data} />
+      <ExportButton data={allDataForExport} />
     </div>
   );
 }
 
 function StatusBadge({ status }) {
-  let colorClass = "bg-gray-100 text-gray-800";
-  const s = String(status).toLowerCase();
-  if (s.includes("pagad") || s.includes("complet"))
-    colorClass =
-      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-  else if (s.includes("pendiente"))
-    colorClass =
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-  else if (s.includes("cancel"))
-    colorClass = "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+  const s = String(status).toUpperCase();
+  const baseColor = RENOVATION_STATUS_COLORS[s] || "#6b7280"; // Default to gray-500 if not found
+
+  // Convert hex to RGB for dynamic opacity, or use a predefined Tailwind class
+  // For simplicity, we'll use a fixed light/dark variant or a direct color if it's a Tailwind class
+  let colorClass = `bg-[${baseColor}] text-white`; // Fallback for direct hex
+
+  // More robust handling for known colors to use Tailwind's bg-opacity
+  if (s === "COLOCADA") {
+    colorClass = "bg-green-500 text-white";
+  } else if (s === "REEXPEDIDA") {
+    colorClass = "bg-red-500 text-white";
+  } else if (s === "CANCELADA") {
+    colorClass = "bg-yellow-500 text-white";
+  } else if (s === "PENDIENTE") {
+    colorClass = "bg-gray-500 text-white";
+  }
 
   return (
     <span

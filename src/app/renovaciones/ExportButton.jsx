@@ -40,12 +40,11 @@ export default function ExportButton({ data }) {
   return (
     <button
       onClick={handleExport}
-      className="fixed bottom-6 left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-600 text-white shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-transform hover:scale-105 active:scale-95 gap-2"
+      className="fixed bottom-6 left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-green-600 text-white shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-transform hover:scale-105 active:scale-95"
       aria-label="Exportar a CSV"
       title="Exportar a CSV"
     >
       <TableCellsIcon className="h-6 w-6" />
-      Exportar
     </button>
   );
 }
