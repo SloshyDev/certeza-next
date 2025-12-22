@@ -103,6 +103,7 @@ export async function GET(req) {
       "Asunto",
       "Fecha llegada",
       "Hora llegada",
+      "Póliza",
       "Resp (min)",
       "Primera respuesta",
     ],
@@ -115,6 +116,7 @@ export async function GET(req) {
       r.asunto || "",
       r.dia_llegada || "",
       r.hora_llegada || "",
+      r.no_poliza || "",
       r.tiempo_respuesta_min == null ? "" : r.tiempo_respuesta_min,
       firstMap.get(r.id)
         ? firstMap.get(r.id).toISOString().slice(0, 16).replace("T", " ")
