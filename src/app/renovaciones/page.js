@@ -13,6 +13,8 @@ import Link from "next/link";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
 
 import ExportButton from "./ExportButton";
+import UploadRenovaciones from "@/components/renovaciones/UploadRenovaciones";
+import UpdateRenovaciones from "@/components/renovaciones/UpdateRenovaciones";
 import RenovacionesCharts from "@/components/charts/RenovacionesCharts";
 
 export default async function RenovacionesPage({ searchParams }) {
@@ -20,6 +22,10 @@ export default async function RenovacionesPage({ searchParams }) {
   if (!session) {
     redirect("/auth/sign-in");
   }
+
+  const userRoles = session.user?.roles || [];
+  const canManage =
+    userRoles.includes("admin") || userRoles.includes("coordinador");
 
   const params = await searchParams;
   const page = Math.max(1, Number(params.page) || 1);
@@ -51,7 +57,15 @@ export default async function RenovacionesPage({ searchParams }) {
     <div className="py-6 min-h-screen relative pb-24">
       <main className="container-responsive px-4 sm:px-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Renovaciones</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">Renovaciones</h1>
+            {canManage && (
+              <div className="flex items-center gap-2">
+                <UploadRenovaciones />
+                <UpdateRenovaciones />
+              </div>
+            )}
+          </div>
           <Link href="/" className="text-sm text-primary hover:underline">
             &larr; Volver al inicio
           </Link>
