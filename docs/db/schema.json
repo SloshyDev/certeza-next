@@ -929,6 +929,11 @@
           "is_nullable": "YES"
         },
         {
+          "column_name": "quincena",
+          "data_type": "character varying",
+          "is_nullable": "YES"
+        },
+        {
           "column_name": "f_actualizacion",
           "data_type": "date",
           "is_nullable": "YES"

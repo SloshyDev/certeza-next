@@ -196,8 +196,8 @@ export async function getBitacoraTableData(
        OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($3))
        OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($4))
      )
-     ORDER BY b.emisor ASC,
-              COALESCE(b.dia_llegada::timestamp + b.hora_llegada, b.fecha_creacion) ASC,
+     ORDER BY COALESCE(b.dia_llegada::timestamp + b.hora_llegada, b.fecha_creacion) ASC,
+              b.emisor ASC,
               b.id ASC`,
     [startDate, endDate, emisorEmail, emisorAlias]
   );
