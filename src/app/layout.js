@@ -12,6 +12,7 @@ import {
 } from "@heroicons/react/20/solid";
 import Logo from "../components/ui/Logo";
 import Provider from "../components/SessionProvider";
+import UserMenu from "../components/UserMenu";
 
 import Link from "next/link";
 import { auth, signOut } from "@/../auth";
@@ -103,15 +104,7 @@ export default async function RootLayout({ children }) {
                         />
                         Admin
                       </Link>
-                      <form action={signOutAction}>
-                        <button className="btn-secondary gap-2">
-                          <ArrowRightStartOnRectangleIcon
-                            className="h-4 w-4 text-foreground"
-                            aria-hidden="true"
-                          />
-                          Salir
-                        </button>
-                      </form>
+                      <UserMenu user={session.user} onSignOut={signOutAction} />
                     </div>
                     <details className="relative sm:hidden">
                       <summary className="btn-secondary list-none flex items-center gap-2">
@@ -153,15 +146,7 @@ export default async function RootLayout({ children }) {
                             />
                             Admin
                           </Link>
-                          <form action={signOutAction} className="mt-2">
-                            <button className="btn-secondary w-full gap-2">
-                              <ArrowRightStartOnRectangleIcon
-                                className="h-4 w-4 text-foreground"
-                                aria-hidden="true"
-                              />
-                              Salir
-                            </button>
-                          </form>
+                          <UserMenu user={session.user} onSignOut={signOutAction} />
                         </div>
                       </div>
                     </details>
