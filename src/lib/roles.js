@@ -141,7 +141,7 @@ export function isEditor(session) {
 }
 
 export function isAdminArea(session) {
-  return hasRole(session, ["admin", "coordinador", "supervisor_emi"]);
+  return hasRole(session, ["admin", "coordinador", "supervisor_emi", "emisor"]);
 }
 
 export async function resolveUserRoles(session) {
