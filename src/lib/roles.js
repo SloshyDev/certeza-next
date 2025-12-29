@@ -144,6 +144,15 @@ export function isAdminArea(session) {
   return hasRole(session, ["admin", "coordinador", "supervisor_emi", "emisor"]);
 }
 
+export function isAnalistaMesaVales(session) {
+  return hasRole(session, ["analista_mesa"]);
+}
+
+
+export function canEditMesaVales(session) {
+  return hasRole(session, ["analista_mesa", "coordinador", "admin"]);
+}
+
 export async function resolveUserRoles(session) {
   const inSession = Array.isArray(session?.user?.roles)
     ? session.user.roles

@@ -18,6 +18,8 @@ import HeatmapLoader from "@/components/charts/HeatmapLoader";
 import EmisorCharts from "@/components/charts/EmisorCharts";
 import RenovacionesCharts from "@/components/charts/RenovacionesCharts";
 import { getRenovacionesStats, getRenovacionesByMes } from "@/lib/renovaciones";
+import { getIngresosStats } from "@/lib/ingresos";
+import IngresosDashboard from "@/components/charts/IngresosDashboard";
 
 export default async function Home(props) {
   const session = await auth();
@@ -68,6 +70,9 @@ export default async function Home(props) {
     session && dbReady ? await getRenovacionesStats() : [];
   const renovacionesByMes =
     session && dbReady ? await getRenovacionesByMes() : [];
+  const ingresosStats =
+    session && dbReady ? await getIngresosStats(start, end) : { byStatus: [], byCompania: [], byAsesor: [] };
+
 
   const rawTipos = searchParams.tipo;
   const tiposArray = Array.isArray(rawTipos)
@@ -120,13 +125,8 @@ export default async function Home(props) {
   return (
     <div className="py-6">
       <main className="container-responsive px-4 sm:px-6">
-        <h1 className="text-balance">CERTEZA App</h1>
-        <p className="mt-4">
-          Hola, {displayName} ({session.user?.email})
-        </p>
-        <p className="mt-2">
-          Roles: {(session.user?.roles || []).join(", ") || "sin roles"}
-        </p>
+        <h1 className="text-center">Balance general</h1>
+
 
         <div className="mt-8">
           <form
@@ -220,6 +220,7 @@ export default async function Home(props) {
               )}
             </div>
           )}
+
           {showEmisorCharts && (
             <div className="mt-10">
               <h2 className="text-xl font-semibold">Actividad por emisor</h2>
@@ -281,6 +282,14 @@ export default async function Home(props) {
               )}
             </div>
           ) : null}
+
+          {/* Ingresos Dashboard Section */}
+          {dbReady && (
+            <div className="mt-10">
+              <h2 className="text-xl font-semibold mb-6">Tablero de Ingresos</h2>
+              <IngresosDashboard stats={ingresosStats} />
+            </div>
+          )}
 
           {/* Renovaciones Section */}
           {dbReady && (
