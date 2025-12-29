@@ -6,6 +6,7 @@ import { isAdminArea, canEditMesaVales } from "@/lib/roles";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeftIcon, TableCellsIcon } from "@heroicons/react/24/outline";
+import CreateIngresoButton from "@/components/ingresos/CreateIngresoButton";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,10 @@ export default async function Page(props) {
         <div className="py-6 px-4 sm:px-6 relative min-h-screen pb-20">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold">Ingresos</h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-bold">Ingresos</h1>
+                        {canEdit && <CreateIngresoButton asesores={asesores} />}
+                    </div>
                     <p className="text-sm text-muted-foreground mt-1">
                         Visualización de ingresos y estatus
                     </p>
