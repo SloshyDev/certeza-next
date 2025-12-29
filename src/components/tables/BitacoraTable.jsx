@@ -9,6 +9,8 @@ import {
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
+import { isAdmin, isAdminArea } from "@/lib/roles";
+import { useSession } from "next-auth/react";
 
 const columnHelper = createColumnHelper();
 
@@ -214,6 +216,9 @@ export default function BitacoraTable({
     } catch (e) { }
   }
 
+  const { data: session } = useSession();
+  const showRespColumn = isAdminArea(session);
+
   async function submitChangeEmisor() {
     const id = showChangeEmisorId;
     if (!id) return;
@@ -367,32 +372,38 @@ export default function BitacoraTable({
         header: () => "Asunto",
         cell: (info) => info.getValue() || "",
       }),
-      columnHelper.accessor("tiempo_respuesta_min", {
-        header: () => "Resp. (hh:mm)",
-        cell: (info) => {
-          const v = info.getValue();
-          if (v == null) {
-            const id = info.row.original?.id;
-            return (
-              !canEdit ? (<span className="text-primary font-bold dark:text-yellow-300">En proceso...</span>) : (
-                <button
-                  className="px-2 py-1 border rounded bg-gray-100"
-                  disabled={!canEdit}
-                  onClick={() => handleSetRespondido(id)}
-                >
-                  Añadir resp.
-                </button>
-              )
-            );
-          }
-          const h = Math.floor(Number(v) / 60);
-          const m = Math.abs(Number(v) % 60);
-          const hh = String(h).padStart(2, "0");
-          const mm = String(m).padStart(2, "0");
-          return `${hh}:${mm}`;
-        },
-        size: 120,
-      }),
+      ...(showRespColumn
+        ? [
+          columnHelper.accessor("tiempo_respuesta_min", {
+            header: () => "Resp. (hh:mm)",
+            cell: (info) => {
+              const v = info.getValue();
+              if (v == null) {
+                const id = info.row.original?.id;
+                return !canEdit ? (
+                  <span className="text-primary font-bold dark:text-yellow-300">
+                    En proceso...
+                  </span>
+                ) : (
+                  <button
+                    className="px-2 py-1 border rounded bg-gray-100 dark:text-black"
+                    disabled={!canEdit}
+                    onClick={() => handleSetRespondido(id)}
+                  >
+                    Añadir resp.
+                  </button>
+                );
+              }
+              const h = Math.floor(Number(v) / 60);
+              const m = Math.abs(Number(v) % 60);
+              const hh = String(h).padStart(2, "0");
+              const mm = String(m).padStart(2, "0");
+              return `${hh}:${mm}`;
+            },
+            size: 120,
+          }),
+        ]
+        : []),
       columnHelper.display({
         id: "estatus-edit",
         header: () => "Estatus",
