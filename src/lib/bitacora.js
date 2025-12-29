@@ -101,13 +101,13 @@ export async function getTiposTotals(startDate, endDate) {
 export async function getHoraLlegadaSeries(startDate, endDate) {
   if (!isDbConfigured()) return [];
   const res = await query(
-    `SELECT to_char(fecha_creacion::date, 'YYYY-MM-DD') AS dia,
-            EXTRACT(HOUR FROM hora_llegada)::int AS hora,
+    `SELECT to_char(fecha_asignada::date, 'YYYY-MM-DD') AS dia,
+            EXTRACT(HOUR FROM hora_asignado)::int AS hora,
             COUNT(*)::int AS total
      FROM bitacora
-     WHERE fecha_creacion::date BETWEEN $1 AND $2
-       AND hora_llegada IS NOT NULL
-       AND EXTRACT(HOUR FROM hora_llegada)::int BETWEEN 8 AND 19
+     WHERE fecha_asignada::date BETWEEN $1 AND $2
+       AND hora_asignado IS NOT NULL
+       AND EXTRACT(HOUR FROM hora_asignado)::int BETWEEN 8 AND 19
      GROUP BY dia, hora
      ORDER BY dia ASC, hora ASC`,
     [startDate, endDate]
@@ -122,11 +122,11 @@ export async function getHoraLlegadaSeries(startDate, endDate) {
 export async function getHoraAsignadoSeries(startDate, endDate) {
   if (!isDbConfigured()) return [];
   const res = await query(
-    `SELECT to_char(fecha_asignada, 'YYYY-MM-DD') AS dia,
+    `SELECT to_char(fecha_asignada::date, 'YYYY-MM-DD') AS dia,
             EXTRACT(HOUR FROM hora_asignado)::int AS hora,
             COUNT(*)::int AS total
      FROM bitacora
-     WHERE fecha_asignada BETWEEN $1 AND $2
+     WHERE fecha_asignada::date BETWEEN $1 AND $2
        AND hora_asignado IS NOT NULL
        AND EXTRACT(HOUR FROM hora_asignado)::int BETWEEN 8 AND 19
      GROUP BY dia, hora
