@@ -13,7 +13,7 @@ export async function GET() {
     // Agregar ejemplo
     XLSX.utils.sheet_add_aoa(
       ws,
-      [["12345-AB", "ENERO", "PENDIENTE", "JUAN PEREZ"]],
+      [["12345-AB", "ENERO", "PENDIENTE", "9051"]],
       { origin: -1 }
     );
 

@@ -241,8 +241,8 @@ export async function POST(req) {
               uniqueClaves,
             ]),
             client.query(
-              "SELECT no_poliza FROM polizas WHERE no_poliza = ANY($1)",
-              [uniquePolizas]
+              "SELECT no_poliza FROM polizas WHERE no_poliza::text = ANY($1::text[])",
+              [uniquePolizas.map((p) => String(p))]
             ),
           ]);
 
@@ -253,7 +253,7 @@ export async function POST(req) {
 
           const existingPolizasSet = new Set();
           polizasResult.rows.forEach((row) =>
-            existingPolizasSet.add(row.no_poliza)
+            existingPolizasSet.add(String(row.no_poliza))
           );
 
           sendProgress({
@@ -276,8 +276,8 @@ export async function POST(req) {
               continue;
             }
 
-            // Verificar que la póliza exista
-            if (!existingPolizasSet.has(row.no_poliza)) {
+            // Verificar que la póliza exista (comparar como string)
+            if (!existingPolizasSet.has(String(row.no_poliza))) {
               results.errores.push({
                 fila: row.rowNum,
                 error: `Póliza ${row.no_poliza} no existe en la base de datos (solo se actualizan pólizas existentes)`,

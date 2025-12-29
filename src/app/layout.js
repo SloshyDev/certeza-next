@@ -7,8 +7,12 @@ import {
   Bars3Icon,
   ClipboardDocumentListIcon,
   ArrowPathIcon,
+  ChartBarIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/20/solid";
 import Logo from "../components/ui/Logo";
+import Provider from "../components/SessionProvider";
+
 import Link from "next/link";
 import { auth, signOut } from "@/../auth";
 
@@ -38,112 +42,129 @@ export default async function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background text-foreground`}
       >
-        <header className="bg-background border-b border-border">
-          <div className="container-responsive flex items-center justify-between py-4 px-4 sm:px-6">
-            <Link
-              href="/"
-              aria-label="Ir a inicio"
-              className="flex items-center gap-2"
-            >
-              <Logo className="h-8 w-8" />
-              <span className="text-sm md:text-base text-foreground font-semibold tracking-wide">
-                CERTEZA
-              </span>
-            </Link>
-            <nav className="flex items-center gap-2">
-              <ThemeToggle />
-              {session ? (
-                <>
-                  <div className="hidden sm:flex items-center gap-2">
-                    <Link href="/bitacora" className="btn-secondary gap-2">
-                      <ClipboardDocumentListIcon
-                        className="h-4 w-4 text-foreground"
-                        aria-hidden="true"
-                      />
-                      Bitácora
-                    </Link>
-                    <Link href="/renovaciones" className="btn-secondary gap-2">
-                      <ArrowPathIcon
-                        className="h-4 w-4 text-foreground"
-                        aria-hidden="true"
-                      />
-                      Renovaciones
-                    </Link>
-                    <Link href="/admin" className="btn-secondary gap-2">
-                      <Cog6ToothIcon
-                        className="h-4 w-4 text-foreground"
-                        aria-hidden="true"
-                      />
-                      Admin
-                    </Link>
-                    <form action={signOutAction}>
-                      <button className="btn-secondary gap-2">
-                        <ArrowRightStartOnRectangleIcon
+        <Provider session={session}>
+          <header className="bg-background border-b border-border">
+            {/* ... existing header code ... */}
+            <div className="container-responsive flex items-center justify-between py-4 px-4 sm:px-6">
+              <Link
+                href="/"
+                aria-label="Ir a inicio"
+                className="flex items-center gap-2"
+              >
+                <Logo className="h-8 w-8" />
+                <span className="text-sm md:text-base text-foreground font-semibold tracking-wide">
+                  CERTEZA
+                </span>
+              </Link>
+              <nav className="flex items-center gap-2">
+                <ThemeToggle />
+                {session ? (
+                  <>
+                    <div className="hidden sm:flex items-center gap-2">
+                      <Link href="/recibos" className="btn-secondary gap-2">
+                        <CurrencyDollarIcon
                           className="h-4 w-4 text-foreground"
                           aria-hidden="true"
                         />
-                        Salir
-                      </button>
-                    </form>
-                  </div>
-                  <details className="relative sm:hidden">
-                    <summary className="btn-secondary list-none flex items-center gap-2">
-                      <Bars3Icon
-                        className="h-4 w-4 text-foreground"
-                        aria-hidden="true"
-                      />
-                      Menú
-                    </summary>
-                    <div className="absolute right-0 mt-2 w-40 rounded-lg border border-border bg-background shadow-md">
-                      <div className="flex flex-col p-2">
-                        <Link
-                          href="/bitacora"
-                          className="btn-secondary w-full gap-2"
-                        >
-                          <ClipboardDocumentListIcon
+                        Cobranza
+                      </Link>
+                      <Link href="/polizas" className="btn-secondary gap-2">
+                        <ChartBarIcon
+                          className="h-4 w-4 text-foreground"
+                          aria-hidden="true"
+                        />
+                        Drive
+                      </Link>
+                      <Link href="/bitacora" className="btn-secondary gap-2">
+                        <ClipboardDocumentListIcon
+                          className="h-4 w-4 text-foreground"
+                          aria-hidden="true"
+                        />
+                        Bitácora
+                      </Link>
+                      <Link href="/renovaciones" className="btn-secondary gap-2">
+                        <ArrowPathIcon
+                          className="h-4 w-4 text-foreground"
+                          aria-hidden="true"
+                        />
+                        Renovaciones
+                      </Link>
+                      <Link href="/admin" className="btn-secondary gap-2">
+                        <Cog6ToothIcon
+                          className="h-4 w-4 text-foreground"
+                          aria-hidden="true"
+                        />
+                        Admin
+                      </Link>
+                      <form action={signOutAction}>
+                        <button className="btn-secondary gap-2">
+                          <ArrowRightStartOnRectangleIcon
                             className="h-4 w-4 text-foreground"
                             aria-hidden="true"
                           />
-                          Bitácora
-                        </Link>
-                        <Link
-                          href="/renovaciones"
-                          className="btn-secondary w-full mt-2 gap-2"
-                        >
-                          <ArrowPathIcon
-                            className="h-4 w-4 text-foreground"
-                            aria-hidden="true"
-                          />
-                          Renovaciones
-                        </Link>
-                        <Link
-                          href="/admin"
-                          className="btn-secondary w-full mt-2 gap-2"
-                        >
-                          <Cog6ToothIcon
-                            className="h-4 w-4 text-foreground"
-                            aria-hidden="true"
-                          />
-                          Admin
-                        </Link>
-                        <form action={signOutAction} className="mt-2">
-                          <button className="btn-secondary w-full gap-2">
-                            <ArrowRightStartOnRectangleIcon
+                          Salir
+                        </button>
+                      </form>
+                    </div>
+                    <details className="relative sm:hidden">
+                      <summary className="btn-secondary list-none flex items-center gap-2">
+                        <Bars3Icon
+                          className="h-4 w-4 text-foreground"
+                          aria-hidden="true"
+                        />
+                        Menú
+                      </summary>
+                      <div className="absolute right-0 mt-2 w-40 rounded-lg border border-border bg-background shadow-md">
+                        <div className="flex flex-col p-2">
+                          <Link
+                            href="/bitacora"
+                            className="btn-secondary w-full gap-2"
+                          >
+                            <ClipboardDocumentListIcon
                               className="h-4 w-4 text-foreground"
                               aria-hidden="true"
                             />
-                            Salir
-                          </button>
-                        </form>
+                            Bitácora
+                          </Link>
+                          <Link
+                            href="/renovaciones"
+                            className="btn-secondary w-full mt-2 gap-2"
+                          >
+                            <ArrowPathIcon
+                              className="h-4 w-4 text-foreground"
+                              aria-hidden="true"
+                            />
+                            Renovaciones
+                          </Link>
+                          <Link
+                            href="/admin"
+                            className="btn-secondary w-full mt-2 gap-2"
+                          >
+                            <Cog6ToothIcon
+                              className="h-4 w-4 text-foreground"
+                              aria-hidden="true"
+                            />
+                            Admin
+                          </Link>
+                          <form action={signOutAction} className="mt-2">
+                            <button className="btn-secondary w-full gap-2">
+                              <ArrowRightStartOnRectangleIcon
+                                className="h-4 w-4 text-foreground"
+                                aria-hidden="true"
+                              />
+                              Salir
+                            </button>
+                          </form>
+                        </div>
                       </div>
-                    </div>
-                  </details>
-                </>
-              ) : null}
-            </nav>
-          </div>
-        </header>
-        <main className="w-full px-4 sm:px-6">{children}</main>
+                    </details>
+                  </>
+                ) : null}
+              </nav>
+            </div>
+          </header>
+          <main className="w-full px-4 sm:px-6">{children}</main>
+        </Provider>
       </body>
     </html>
   );

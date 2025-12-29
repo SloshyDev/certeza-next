@@ -196,7 +196,7 @@ export async function getBitacoraTableData(
        OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($3))
        OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($4))
      )
-     ORDER BY COALESCE(b.dia_llegada::timestamp + b.hora_llegada, b.fecha_creacion) ASC,
+     ORDER BY COALESCE(b.fecha_asignada::timestamp + b.hora_asignado) DESC,
               b.emisor ASC,
               b.id ASC`,
     [startDate, endDate, emisorEmail, emisorAlias]
@@ -274,9 +274,7 @@ export async function searchBitacoraByIdOrAsunto(
        OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($3))
        OR LOWER(TRIM(b.emisor)) = LOWER(TRIM($4))
      )
-     ORDER BY b.emisor ASC,
-              COALESCE(b.dia_llegada::timestamp + b.hora_llegada, b.fecha_creacion) ASC,
-              b.id ASC`,
+     ORDER BY COALESCE(b.fecha_asignada::timestamp + b.hora_asignado) DESC`,
     [id ?? null, asunto ?? null, emisorEmail, emisorAlias]
   );
   return res.rows.map((r) => ({

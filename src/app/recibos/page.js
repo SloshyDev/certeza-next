@@ -3,38 +3,36 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import PolizasTable from "@/components/tables/PolizasTable";
-import ExportPolizasButton from "./ExportButton";
-import DownloadTemplateButton from "./DownloadTemplateButton";
-import GenerarRecibosButton from "./GenerarRecibosButton";
-import UploadPolizasButtonNew from "./UploadPolizasButtonNew";
-import CreatePolizasButton from "./CreatePolizasButton";
-import DescargarCanceladasButton from "./DescargarCanceladasButton";
+import UploadRecibosButton from "./UploadRecibosButton";
+import RecibosTable from "@/components/tables/RecibosTable";
+import DescargarEstadosCuentaButton from "@/components/DescargarEstadosCuentaButton";
+import ExportComisionesPendientesButton from "./ExportComisionesPendientesButton";
+import UploadComisionesButton from "./UploadComisionesButton";
 
-export default function PolizasPage() {
+export default function RecibosPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
 
-  const [polizas, setPolizas] = useState([]);
+  const [mounted, setMounted] = useState(false);
+  const [recibosData, setRecibosData] = useState([]);
+  const [allRecibosData, setAllRecibosData] = useState([]);
+  const [loadingTable, setLoadingTable] = useState(true);
   const [asesores, setAsesores] = useState([]);
-  const [estatusOptions, setEstatusOptions] = useState([]);
   const [ciasOptions, setCiasOptions] = useState([]);
+  const [estatusOptions, setEstatusOptions] = useState([]);
   const [quincenasOptions, setQuincenasOptions] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   // Estado de los filtros
   const [filters, setFilters] = useState({
     no_poliza: searchParams.get("no_poliza") || "",
     asesor_id: searchParams.get("asesor_id") || "",
     cia: searchParams.get("cia") || "",
-    estatus: searchParams.get("estatus") || "",
+    estatus_pago: searchParams.get("estatus_pago") || "",
+    folio: searchParams.get("folio") || "",
     quincena: searchParams.get("quincena") || "",
-    fecha_desde: searchParams.get("fecha_desde") || "",
-    fecha_hasta: searchParams.get("fecha_hasta") || "",
   });
 
-  // Verificar rol de admin
   useEffect(() => {
     if (status === "loading") return;
     if (status === "unauthenticated") {
@@ -42,62 +40,107 @@ export default function PolizasPage() {
       return;
     }
     if (session && !session.user?.roles?.includes("admin")) {
-      alert("No tienes permisos para acceder a esta página. Solo usuarios con rol Admin pueden ver pólizas.");
+      alert("No tienes permisos para acceder a esta página. Solo usuarios con rol Admin pueden ver recibos.");
       router.push("/");
       return;
     }
+    setMounted(true);
+    loadAsesores();
+    loadRecibos();
   }, [status, session, router]);
 
-  // Cargar datos iniciales
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.roles?.includes("admin")) {
-      fetchPolizas();
+    if (allRecibosData.length > 0) {
+      applyFilters();
     }
-  }, [searchParams, status, session]);
+  }, [filters, allRecibosData]);
 
-  const fetchPolizas = async () => {
-    setLoading(true);
+  async function loadAsesores() {
     try {
-      const params = new URLSearchParams();
+      const res = await fetch("/api/asesores");
+      if (res.ok) {
+        const data = await res.json();
+        setAsesores(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error("Error loading asesores:", error);
+    }
+  }
 
-      if (filters.no_poliza) params.set("no_poliza", filters.no_poliza);
-      if (filters.asesor_id) params.set("asesor_id", filters.asesor_id);
-      if (filters.cia) params.set("cia", filters.cia);
-      if (filters.estatus) params.set("estatus", filters.estatus);
-      if (filters.quincena) params.set("quincena", filters.quincena);
-      if (filters.fecha_desde) params.set("fecha_desde", filters.fecha_desde);
-      if (filters.fecha_hasta) params.set("fecha_hasta", filters.fecha_hasta);
+  async function loadRecibos() {
+    setLoadingTable(true);
+    try {
+      const res = await fetch("/api/recibos/list?limit=1000");
+      if (res.ok) {
+        const json = await res.json();
+        const data = json.data || [];
+        setAllRecibosData(data);
 
-      // Obtener todos los registros (la paginación se hace en el cliente)
-      params.set("limit", "10000");
-
-      const response = await fetch(`/api/polizas?${params.toString()}`);
-      const data = await response.json();
-
-      if (data.ok) {
-        setPolizas(data.polizas || []);
-        setAsesores(data.asesores || []);
-
-        // Extraer opciones únicas de estatus, cias y quincenas
+        // Extraer opciones únicas
+        const uniqueCias = [...new Set(data.map((r) => r.cia).filter(Boolean))];
         const uniqueEstatus = [
-          ...new Set(data.polizas.map((p) => p.estatus).filter(Boolean)),
-        ];
-        const uniqueCias = [
-          ...new Set(data.polizas.map((p) => p.cia).filter(Boolean)),
+          ...new Set(
+            data
+              .flatMap((r) => (r.recibos || []).map((rec) => rec.estatus_pago))
+              .filter(Boolean)
+          ),
         ];
         const uniqueQuincenas = [
-          ...new Set(data.polizas.map((p) => p.quincena).filter(Boolean)),
+          ...new Set(data.map((r) => r.quincena).filter(Boolean)),
         ];
-        setEstatusOptions(uniqueEstatus.sort());
         setCiasOptions(uniqueCias.sort());
+        setEstatusOptions(uniqueEstatus.sort());
         setQuincenasOptions(uniqueQuincenas.sort());
       }
     } catch (error) {
-      console.error("Error al cargar pólizas:", error);
+      console.error("Error loading recibos:", error);
     } finally {
-      setLoading(false);
+      setLoadingTable(false);
     }
-  };
+  }
+
+  function applyFilters() {
+    let filtered = [...allRecibosData];
+
+    if (filters.no_poliza) {
+      filtered = filtered.filter((r) =>
+        r.no_poliza?.toLowerCase().includes(filters.no_poliza.toLowerCase())
+      );
+    }
+
+    if (filters.asesor_id) {
+      filtered = filtered.filter(
+        (r) => String(r.asesor_id) === String(filters.asesor_id)
+      );
+    }
+
+    if (filters.cia) {
+      filtered = filtered.filter((r) => r.cia === filters.cia);
+    }
+
+    if (filters.estatus_pago) {
+      filtered = filtered.filter((r) => {
+        const recibos = r.recibos || [];
+        return recibos.some((rec) => rec.estatus_pago === filters.estatus_pago);
+      });
+    }
+
+    if (filters.folio) {
+      filtered = filtered.filter((r) =>
+        r.folio?.toLowerCase().includes(filters.folio.toLowerCase())
+      );
+    }
+
+    if (filters.quincena) {
+      filtered = filtered.filter((r) => r.quincena === filters.quincena);
+    }
+
+    setRecibosData(filtered);
+  }
+
+  function handleUploadSuccess() {
+    loadRecibos();
+  }
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -106,18 +149,14 @@ export default function PolizasPage() {
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-
-    // Construir URL con los filtros
     const params = new URLSearchParams();
     if (filters.no_poliza) params.set("no_poliza", filters.no_poliza);
     if (filters.asesor_id) params.set("asesor_id", filters.asesor_id);
     if (filters.cia) params.set("cia", filters.cia);
-    if (filters.estatus) params.set("estatus", filters.estatus);
+    if (filters.estatus_pago) params.set("estatus_pago", filters.estatus_pago);
+    if (filters.folio) params.set("folio", filters.folio);
     if (filters.quincena) params.set("quincena", filters.quincena);
-    if (filters.fecha_desde) params.set("fecha_desde", filters.fecha_desde);
-    if (filters.fecha_hasta) params.set("fecha_hasta", filters.fecha_hasta);
-
-    router.push(`/polizas?${params.toString()}`);
+    router.push(`/recibos?${params.toString()}`);
   };
 
   const handleClearFilters = () => {
@@ -125,32 +164,36 @@ export default function PolizasPage() {
       no_poliza: "",
       asesor_id: "",
       cia: "",
-      estatus: "",
+      estatus_pago: "",
+      folio: "",
       quincena: "",
-      fecha_desde: "",
-      fecha_hasta: "",
     });
-    router.push("/polizas");
+    router.push("/recibos");
   };
+
+  if (!mounted) {
+    return <div className="p-8">Cargando...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <div className=" mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-                Pólizas
+                Recibos
               </h1>
               <p className="text-sm text-muted">
-                Total de pólizas:{" "}
-                <span className="font-semibold">{polizas.length}</span>
+                Total de pólizas con recibos:{" "}
+                <span className="font-semibold">{recibosData.length}</span>
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <DownloadTemplateButton />
-              <UploadPolizasButtonNew onUploadSuccess={fetchPolizas} />
+            <div className="flex flex-wrap gap-2">
+              <DescargarEstadosCuentaButton />
+              <ExportComisionesPendientesButton />
+              <UploadComisionesButton onSuccess={handleUploadSuccess} />
             </div>
           </div>
         </div>
@@ -173,7 +216,7 @@ export default function PolizasPage() {
                   name="no_poliza"
                   value={filters.no_poliza}
                   onChange={handleFilterChange}
-                  placeholder="Ej: 12345 o 12345,67890,..."
+                  placeholder="Buscar por póliza..."
                   className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
               </div>
@@ -226,28 +269,47 @@ export default function PolizasPage() {
                 </select>
               </div>
 
-              {/* Estatus */}
+              {/* Estatus de Pago */}
               <div>
                 <label
-                  htmlFor="estatus"
+                  htmlFor="estatus_pago"
                   className="block text-sm font-medium text-foreground mb-1"
                 >
-                  Estatus
+                  Estatus de Pago
                 </label>
                 <select
-                  id="estatus"
-                  name="estatus"
-                  value={filters.estatus}
+                  id="estatus_pago"
+                  name="estatus_pago"
+                  value={filters.estatus_pago}
                   onChange={handleFilterChange}
                   className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="">Todos</option>
-                  {estatusOptions.map((est) => (
-                    <option key={est} value={est}>
-                      {est}
+                  {estatusOptions.map((estatus) => (
+                    <option key={estatus} value={estatus}>
+                      {estatus}
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Folio */}
+              <div>
+                <label
+                  htmlFor="folio"
+                  className="block text-sm font-medium text-foreground mb-1"
+                >
+                  Folio
+                </label>
+                <input
+                  type="text"
+                  id="folio"
+                  name="folio"
+                  value={filters.folio}
+                  onChange={handleFilterChange}
+                  placeholder="Buscar por folio..."
+                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
               </div>
 
               {/* Quincena */}
@@ -266,88 +328,46 @@ export default function PolizasPage() {
                   className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="">Todas</option>
-                  {quincenasOptions.map((quin) => (
-                    <option key={quin} value={quin}>
-                      {quin}
+                  {quincenasOptions.map((quincena) => (
+                    <option key={quincena} value={quincena}>
+                      {quincena}
                     </option>
                   ))}
                 </select>
               </div>
-
-              {/* Fecha Desde */}
-              <div>
-                <label
-                  htmlFor="fecha_desde"
-                  className="block text-sm font-medium text-foreground mb-1"
-                >
-                  Fecha Desde
-                </label>
-                <input
-                  type="date"
-                  id="fecha_desde"
-                  name="fecha_desde"
-                  value={filters.fecha_desde}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
-
-              {/* Fecha Hasta */}
-              <div>
-                <label
-                  htmlFor="fecha_hasta"
-                  className="block text-sm font-medium text-foreground mb-1"
-                >
-                  Fecha Hasta
-                </label>
-                <input
-                  type="date"
-                  id="fecha_hasta"
-                  name="fecha_hasta"
-                  value={filters.fecha_hasta}
-                  onChange={handleFilterChange}
-                  className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-              </div>
             </div>
 
-            {/* Botones de acción */}
+            {/* Botones */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 type="submit"
-                className="px-6 py-2 bg-primary text-white rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-opacity font-medium"
+                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
               >
                 Aplicar Filtros
               </button>
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="px-6 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-colors font-medium"
+                className="px-4 py-2 bg-secondary text-white rounded-md hover:bg-secondary/80 focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 transition-colors"
               >
                 Limpiar Filtros
               </button>
-              <GenerarRecibosButton filters={filters} />
-              <DescargarCanceladasButton filters={filters} />
             </div>
           </form>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+        {/* Tabla de recibos */}
+        {loadingTable ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+            <p className="text-muted">Cargando recibos...</p>
           </div>
+        ) : (
+          <RecibosTable data={recibosData} />
         )}
 
-        {/* Tabla */}
-        {!loading && <PolizasTable data={polizas} />}
+        <UploadRecibosButton onSuccess={handleUploadSuccess} />
       </div>
-
-      {/* Botón de Exportar */}
-      <ExportPolizasButton filters={filters} />
-
-      {/* Botón de Crear Pólizas */}
-      <CreatePolizasButton onUploadSuccess={fetchPolizas} />
     </div>
   );
 }

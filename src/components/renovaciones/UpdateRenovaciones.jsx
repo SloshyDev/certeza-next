@@ -49,61 +49,45 @@ export default function UpdateRenovaciones() {
         throw new Error("El archivo está vacío");
       }
 
-      // Identificar columnas
-      const firstRow = data[0];
-      const keys = Object.keys(firstRow);
-      const keyPoliza = keys.find((k) => k.toUpperCase().includes("POLIZA"));
-      const keyDocs = keys.find(
-        (k) =>
-          k.toUpperCase().includes("DOCUMENTOS") ||
-          k.toUpperCase().includes("FALTANTES")
-      );
-
-      if (!keyPoliza) {
-        throw new Error(
-          "No se encontró la columna de Póliza (ej. 'NO DE POLIZA')"
-        );
-      }
-
       // Preparar datos limpios
       const cleanUpdates = [];
-      for (const row of data) {
-        const polizaRaw = row[keyPoliza];
-        if (!polizaRaw) continue;
 
-        const poliza = String(polizaRaw).trim();
-        const docsRaw = keyDocs ? row[keyDocs] : null;
+      // Iterar sobre los datos y preparar actualizaciones
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+
+        // Búsqueda flexible de columnas
+        const keys = Object.keys(row);
+        // Busca columna que contenga "POLIZA" (case insensitive)
+        const polizaKey = keys.find((k) => k.toUpperCase().includes("POLIZA"));
+        // Busca columna "ESTATUS"
+        const statusKey = keys.find((k) => k.toUpperCase() === "ESTATUS");
+
+        if (!polizaKey) continue;
+
+        const poliza = String(row[polizaKey]).trim();
+        const rawStatus = statusKey ? String(row[statusKey]).trim() : "";
+
+        let estatus = rawStatus;
 
         // Lógica de negocio (Client-side)
-        let nuevoEstatus = "PENDIENTE";
-        let docsVal = docsRaw ? String(docsRaw).trim() : "";
-
-        if (
-          !docsVal ||
-          docsVal === "" ||
-          docsVal === "-" ||
-          docsVal === "0" ||
-          docsVal.toUpperCase() === "NINGUNO"
-        ) {
-          nuevoEstatus = "PENDIENTE";
+        if (!rawStatus) {
+          // Si está vacío, decidimos si enviar PENDIENTE o dejarlo vacío. 
+          // El usuario dijo "cualquier otra cosa... mandalo asi". 
+          // Si viene vacío en el excel, probablemente sea mejor ignorarlo o ponerlo PENDIENTE.
+          // Asumiremos que si está vacío se queda como PENDIENTE para evitar borrarlos.
+          estatus = "PENDIENTE";
         } else {
-          const docsUpper = docsVal.toUpperCase();
-          if (
-            docsUpper.includes("RECHAZO PARITARIA") ||
-            docsUpper.includes("FALTAN DOCUMENTOS")
-          ) {
-            nuevoEstatus = "PENDIENTE";
-          } else if (docsUpper.includes("FOLIO COMPLETO")) {
-            nuevoEstatus = "COLOCADA";
-          } else if (docsUpper.includes("CANCEL")) {
-            nuevoEstatus = "CANCELADA";
-          } else if (docsUpper.includes("REEXPED")) {
-            nuevoEstatus = "REEXPEDIDA";
-          } else {
-            nuevoEstatus = docsVal;
+          const upperStatus = rawStatus.toUpperCase();
+          if (upperStatus === "FOLIO COMPLETO" || upperStatus === "RECHAZO PARITARIA") {
+            estatus = "COLOCADA";
+          } else if (upperStatus === "FALTAN DOCUMENTOS") {
+            estatus = "PENDIENTE";
           }
+          // "cualquier otra cosa que diga en el estatus mandalo asi" -> estatus ya es rawStatus
         }
-        cleanUpdates.push({ poliza, estatus: nuevoEstatus });
+
+        cleanUpdates.push({ poliza, estatus });
       }
 
       // Enviar por lotes (Chunks)
@@ -205,32 +189,22 @@ export default function UpdateRenovaciones() {
                         <li>
                           Sube un Excel con las columnas:{" "}
                           <strong>NO DE POLIZA</strong> y{" "}
-                          <strong>DOCUMENTOS FALTANTES</strong>.
+                          <strong>ESTATUS</strong>. (Puede incluir otras como quincena, cia, etc, pero estas son las usadas).
                         </li>
                         <li>
-                          El contenido de <strong>DOCUMENTOS FALTANTES</strong>{" "}
-                          se usará para definir el estatus.
+                          El contenido de <strong>ESTATUS</strong> define la actualización.
                         </li>
                         <li>
-                          Si está vacío &rarr; Estatus{" "}
-                          <strong>PENDIENTE</strong>.
+                          Si dice <strong>"FOLIO COMPLETO"</strong> o <strong>"RECHAZO PARITARIA"</strong> &rarr;
+                          Se guarda como <strong>COLOCADA</strong>.
                         </li>
                         <li>
-                          "RECHAZO PARITARIA" o "FALTAN DOCUMENTOS" &rarr;
-                          Estatus <strong>PENDIENTE</strong>.
+                          Si dice <strong>"FALTAN DOCUMENTOS"</strong> &rarr;
+                          Se guarda como <strong>PENDIENTE</strong>.
                         </li>
                         <li>
-                          "FOLIO COMPLETO" &rarr; Estatus{" "}
-                          <strong>COLOCADA</strong>.
+                          Cualquier otro valor se guarda textualmente como el estatus.
                         </li>
-                        <li>
-                          "CANCEL..." &rarr; Estatus <strong>CANCELADA</strong>.
-                        </li>
-                        <li>
-                          "REEXPED..." &rarr; Estatus{" "}
-                          <strong>REEXPEDIDA</strong>.
-                        </li>
-                        <li>Otros valores se guardan tal cual como estatus.</li>
                       </ul>
                     </div>
 
@@ -248,11 +222,10 @@ export default function UpdateRenovaciones() {
 
                     {result && (
                       <div
-                        className={`p-3 rounded-md text-sm border ${
-                          result.success
-                            ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
-                            : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-                        }`}
+                        className={`p-3 rounded-md text-sm border ${result.success
+                          ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                          : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                          }`}
                       >
                         {result.error ? (
                           <p className="font-semibold">Error: {result.error}</p>

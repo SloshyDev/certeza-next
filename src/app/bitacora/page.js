@@ -33,23 +33,18 @@ export default async function Page(props) {
 
   const userRoles = await resolveUserRoles(session);
   const isAdmin = userRoles.includes("admin");
-  const isEditor = userRoles.includes("editor");
+  const isCoordinador = userRoles.includes("coordinador");
+  const isSupervisorEmisor = userRoles.includes("supervisor_emi");
   const isEmisor = userRoles.includes("emisor");
   let emisorEmail = null;
-  let emisorAlias = null;
-  if (isEmisor && !isAdmin && !isEditor) {
+  if (isEmisor && !isAdmin && !isCoordinador) {
     emisorEmail = session.user?.email || null;
-    emisorAlias = session.user?.alias ?? null;
-    if (!emisorAlias) {
-      emisorAlias = await getUserAliasByEmail(session.user?.email || "");
-    }
   }
-  const data = await getBitacoraTableData(start, end, emisorEmail, emisorAlias);
+  const data = await getBitacoraTableData(start, end, emisorEmail);
   const canDelete = isAdmin;
-  const canCreate =
-    isAdmin || isEditor || isEmisor || userRoles.includes("coordinador");
-  const canEdit =
-    isAdmin || isEditor || isEmisor || userRoles.includes("coordinador");
+  const canCreate = isAdmin || isCoordinador || isEmisor || isSupervisorEmisor;
+  const canEdit = isAdmin || isCoordinador || isEmisor || isSupervisorEmisor;
+
 
   return (
     <section className="p-4 space-y-6 overflow-visible min-h-screen">

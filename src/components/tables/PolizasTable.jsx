@@ -33,6 +33,7 @@ export default function PolizasTable({ data = [] }) {
         header: "Estatus",
         cell: (info) => {
           const estatus = info.getValue();
+          const tieneRecibos = info.row.original.tiene_recibos;
           let badgeColor =
             "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
 
@@ -47,11 +48,18 @@ export default function PolizasTable({ data = [] }) {
               "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
 
           return (
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${badgeColor}`}
-            >
-              {estatus || "Sin Estatus"}
-            </span>
+            <div className="flex flex-col gap-1">
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${badgeColor}`}
+              >
+                {estatus || "Sin Estatus"}
+              </span>
+              {tieneRecibos && (
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                  📋 Con Cobranza
+                </span>
+              )}
+            </div>
           );
         },
         size: 120,

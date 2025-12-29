@@ -42,17 +42,15 @@ export async function POST(req) {
       );
     }
 
-    // Obtener asesores para mapeo
-    const asesoresRes = await query("SELECT id, nombre FROM asesor");
+    const asesoresRes = await query("SELECT id, clave FROM asesor");
     const asesoresMap = new Map();
     asesoresRes.rows.forEach((a) => {
-      if (a.nombre) asesoresMap.set(a.nombre.trim().toUpperCase(), a.id);
+      if (a.clave) asesoresMap.set(String(a.clave).trim().toUpperCase(), a.id);
     });
 
     let inserted = 0;
     let errors = [];
 
-    // Validar columnas requeridas (verificando el primer registro)
     const firstRow = data[0];
     if (!("POLIZA" in firstRow) || !("MES" in firstRow)) {
       return NextResponse.json(
@@ -70,7 +68,12 @@ export async function POST(req) {
       const estatus = row["ESTATUS"]
         ? String(row["ESTATUS"]).trim().toUpperCase()
         : "PENDIENTE";
-      const asesorNombre = row["ASESOR"] ? String(row["ASESOR"]).trim() : null;
+      const claveAsesor =
+        row["CLAVE"] || row["CLAVE_ASESOR"] || row["clave_asesor"]
+          ? String(
+            row["CLAVE"] || row["CLAVE_ASESOR"] || row["clave_asesor"]
+          ).trim()
+          : null;
 
       if (!poliza || !mes) {
         errors.push(`Fila ${rowNum}: Falta Póliza o Mes`);
@@ -78,16 +81,14 @@ export async function POST(req) {
       }
 
       let asesorId = null;
-      if (asesorNombre) {
-        const normAsesor = asesorNombre.toUpperCase();
-        if (asesoresMap.has(normAsesor)) {
-          asesorId = asesoresMap.get(normAsesor);
+      if (claveAsesor) {
+        const normClave = claveAsesor.toUpperCase();
+        if (asesoresMap.has(normClave)) {
+          asesorId = asesoresMap.get(normClave);
         } else {
           errors.push(
-            `Fila ${rowNum}: Asesor '${asesorNombre}' no encontrado en el sistema`
+            `Fila ${rowNum}: Asesor con clave '${claveAsesor}' no encontrado en el sistema`
           );
-          // Opcional: continuar sin asesor
-          // continue;
         }
       }
 

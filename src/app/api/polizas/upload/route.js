@@ -85,16 +85,18 @@ async function getAsesoresByClaves(claves) {
 async function getExistingPolizas(noPolizas) {
   if (!noPolizas || noPolizas.length === 0) return new Set();
 
-  const uniquePolizas = [...new Set(noPolizas.filter((p) => p && p.trim()))];
+  const uniquePolizas = [
+    ...new Set(noPolizas.filter((p) => p && p.trim())),
+  ].map((p) => String(p));
 
   const result = await query(
-    "SELECT no_poliza FROM polizas WHERE no_poliza = ANY($1)",
+    "SELECT no_poliza FROM polizas WHERE no_poliza::text = ANY($1::text[])",
     [uniquePolizas]
   );
 
   const set = new Set();
   result.rows.forEach((row) => {
-    set.add(row.no_poliza);
+    set.add(String(row.no_poliza));
   });
 
   return set;
@@ -379,7 +381,7 @@ export async function POST(req) {
       }
 
       // Verificar que la póliza exista
-      if (!existingPolizasSet.has(row.no_poliza)) {
+      if (!existingPolizasSet.has(String(row.no_poliza))) {
         results.errores.push({
           fila: row.rowNum,
           error: `Póliza ${row.no_poliza} no existe en la base de datos (solo se actualizan pólizas existentes)`,

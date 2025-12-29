@@ -3,11 +3,11 @@ import { query, isDbConfigured } from "./db.js";
 export async function listEmisores() {
   if (!isDbConfigured()) return [];
   const res = await query(
-    `SELECT DISTINCT TRIM(emisor) AS emisor
-     FROM users
-     WHERE emisor IS NOT NULL AND TRIM(emisor) <> ''
-     ORDER BY emisor ASC`
+    `SELECT DISTINCT TRIM(email) AS email
+     FROM users_auth
+     WHERE email IS NOT NULL AND TRIM(email) <> ''
+     ORDER BY email ASC`
   );
-  return res.rows.map((r) => r.emisor).filter(Boolean);
+  return res.rows.map((r) => r.email).filter(Boolean);
 }
 

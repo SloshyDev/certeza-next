@@ -88,7 +88,7 @@ export default function BitacoraTable({
     fetch("/api/asesores")
       .then((r) => r.json())
       .then((list) => setAsesores(Array.isArray(list) ? list : []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   async function handleTipoChange(id, nextTipo) {
@@ -151,7 +151,7 @@ export default function BitacoraTable({
           const res = await fetch("/api/emisores");
           const list = await res.json();
           if (Array.isArray(list)) setEmisores(list);
-        } catch (e) {}
+        } catch (e) { }
       }
       return;
     }
@@ -166,7 +166,7 @@ export default function BitacoraTable({
       setRows((prev) =>
         prev.map((r) => (r.id === id ? { ...r, estatus: nextStatus } : r))
       );
-    } catch (e) {}
+    } catch (e) { }
   }
 
   async function handleSetRespondido(id) {
@@ -211,7 +211,7 @@ export default function BitacoraTable({
       setRespondidoModalId(null);
       setRespondidoFecha("");
       setRespondidoHora("");
-    } catch (e) {}
+    } catch (e) { }
   }
 
   async function submitChangeEmisor() {
@@ -239,7 +239,7 @@ export default function BitacoraTable({
       );
       setShowChangeEmisorId(null);
       setChangeEmisorForm({ emisor: "", motivo: "" });
-    } catch (e) {}
+    } catch (e) { }
   }
 
   async function handleAddPoliza(id, asesorId) {
@@ -273,12 +273,12 @@ export default function BitacoraTable({
     () => [
       ...(showEmisor
         ? [
-            columnHelper.accessor("emisor", {
-              header: () => "Emisor",
-              cell: (info) => info.getValue() || "",
-              enableGrouping: true,
-            }),
-          ]
+          columnHelper.accessor("emisor", {
+            header: () => "Emisor",
+            cell: (info) => info.getValue() || "",
+            enableGrouping: true,
+          }),
+        ]
         : []),
       columnHelper.accessor("id", {
         header: () => "ID",
@@ -305,23 +305,23 @@ export default function BitacoraTable({
       }),
       ...(canDelete
         ? [
-            columnHelper.display({
-              id: "acciones",
-              header: () => "Acciones",
-              cell: ({ row }) => {
-                const id = row.original?.id;
-                return (
-                  <button
-                    className="px-2 py-1 border rounded text-red-600"
-                    onClick={() => handleDelete(id)}
-                  >
-                    Eliminar
-                  </button>
-                );
-              },
-              size: 120,
-            }),
-          ]
+          columnHelper.display({
+            id: "acciones",
+            header: () => "Acciones",
+            cell: ({ row }) => {
+              const id = row.original?.id;
+              return (
+                <button
+                  className="px-2 py-1 border rounded text-red-600"
+                  onClick={() => handleDelete(id)}
+                >
+                  Eliminar
+                </button>
+              );
+            },
+            size: 120,
+          }),
+        ]
         : []),
       columnHelper.display({
         id: "llegada",
@@ -511,9 +511,8 @@ export default function BitacoraTable({
             return (
               <Fragment key={row.id}>
                 <tr
-                  className={`block md:table-row border border-border md:border-0 md:border-t mb-4 md:mb-0 ${
-                    isExpanded ? "rounded-t-lg border-b-0" : "rounded-lg"
-                  }`}
+                  className={`block md:table-row border border-border md:border-0 md:border-t mb-4 md:mb-0 ${isExpanded ? "rounded-t-lg border-b-0" : "rounded-lg"
+                    }`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td

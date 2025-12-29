@@ -236,11 +236,13 @@ erDiagram
     date f_desde 
     date f_hasta 
     date f_pago 
+    date f_pago_comision 
     character varying no_aviso 
     timestamp without time zone created_at 
     text identificador 
     text identificado_key 
     text motivo 
+    integer asesor_ajuste_id 
   }
   recibos_view {
     integer id 
@@ -326,3 +328,4 @@ erDiagram
   asesor ||--o{ renovaciones : "id -> asesor_id"
   users_auth ||--o{ user_roles : "id -> user_id"
   roles ||--o{ user_roles : "id -> role_id"
+  asesor ||--o{ recibos : "id -> asesor_ajuste_id"

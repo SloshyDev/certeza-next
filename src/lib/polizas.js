@@ -31,10 +31,23 @@ export async function getPolizas(filters = {}, page = 1, limit = 50) {
   const conditions = [];
   const params = [];
 
-  // Filtro por número de póliza (búsqueda parcial)
+  // Filtro por número de póliza (búsqueda parcial o múltiple con comas)
   if (filters.no_poliza && filters.no_poliza.trim()) {
-    params.push(`%${filters.no_poliza.trim()}%`);
-    conditions.push(`p.no_poliza ILIKE $${params.length}`);
+    const polizaValue = filters.no_poliza.trim();
+
+    // Si contiene comas, buscar exactamente esos números de póliza
+    if (polizaValue.includes(",")) {
+      const polizas = polizaValue
+        .split(",")
+        .map((p) => p.trim())
+        .filter((p) => p);
+      params.push(polizas);
+      conditions.push(`p.no_poliza = ANY($${params.length})`);
+    } else {
+      // Búsqueda parcial para un solo valor
+      params.push(`%${polizaValue}%`);
+      conditions.push(`p.no_poliza ILIKE $${params.length}`);
+    }
   }
 
   // Filtro por asesor
@@ -104,7 +117,8 @@ export async function getPolizas(filters = {}, page = 1, limit = 50) {
        p.check_mesa,
        p.contador_cambios,
        p.created_by,
-       p.created_at
+       p.created_at,
+       (SELECT COUNT(*) FROM recibos r WHERE r.poliza_id = p.id)::int > 0 as tiene_recibos
      FROM polizas p
      LEFT JOIN asesor a ON p.asesor_id = a.id
      ${whereClause}
@@ -128,8 +142,21 @@ export async function getPolizasCount(filters = {}) {
   const params = [];
 
   if (filters.no_poliza && filters.no_poliza.trim()) {
-    params.push(`%${filters.no_poliza.trim()}%`);
-    conditions.push(`p.no_poliza ILIKE $${params.length}`);
+    const polizaValue = filters.no_poliza.trim();
+
+    // Si contiene comas, buscar exactamente esos números de póliza
+    if (polizaValue.includes(",")) {
+      const polizas = polizaValue
+        .split(",")
+        .map((p) => p.trim())
+        .filter((p) => p);
+      params.push(polizas);
+      conditions.push(`p.no_poliza = ANY($${params.length})`);
+    } else {
+      // Búsqueda parcial para un solo valor
+      params.push(`%${polizaValue}%`);
+      conditions.push(`p.no_poliza ILIKE $${params.length}`);
+    }
   }
 
   if (filters.asesor_id) {
