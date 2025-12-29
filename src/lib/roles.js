@@ -110,9 +110,38 @@ export async function revokeRole(userId, roleName) {
   return true;
 }
 
+
 export function hasRole(session, requiredRoles) {
   const roles = session?.user?.roles ?? [];
   return requiredRoles.some((r) => roles.includes(r));
+}
+
+export function isAdmin(session) {
+  return hasRole(session, ["admin"]);
+}
+
+export function isCoordinador(session) {
+  return hasRole(session, ["coordinador"]);
+}
+
+export function isSupervisorEmisor(session) {
+  return hasRole(session, ["supervisor_emi"]);
+}
+
+export function isViewer(session) {
+  return hasRole(session, ["viewer"]);
+}
+
+export function isEmisor(session) {
+  return hasRole(session, ["emisor"]);
+}
+
+export function isEditor(session) {
+  return hasRole(session, ["editor"]);
+}
+
+export function isAdminArea(session) {
+  return hasRole(session, ["admin", "coordinador", "supervisor_emi"]);
 }
 
 export async function resolveUserRoles(session) {

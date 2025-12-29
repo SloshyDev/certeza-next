@@ -374,13 +374,15 @@ export default function BitacoraTable({
           if (v == null) {
             const id = info.row.original?.id;
             return (
-              <button
-                className="px-2 py-1 border rounded bg-gray-100"
-                disabled={!canEdit}
-                onClick={() => handleSetRespondido(id)}
-              >
-                Añadir resp.
-              </button>
+              !canEdit ? (<span className="text-primary font-bold dark:text-yellow-300">En proceso...</span>) : (
+                <button
+                  className="px-2 py-1 border rounded bg-gray-100"
+                  disabled={!canEdit}
+                  onClick={() => handleSetRespondido(id)}
+                >
+                  Añadir resp.
+                </button>
+              )
             );
           }
           const h = Math.floor(Number(v) / 60);

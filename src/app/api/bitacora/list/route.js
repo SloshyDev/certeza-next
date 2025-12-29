@@ -1,7 +1,7 @@
 import { isDbConfigured } from "@/lib/db.js";
 import { getBitacoraTableData } from "@/lib/bitacora.js";
 import { auth } from "@/../auth";
-import { resolveUserRoles, getUserAliasByEmail } from "@/lib/roles.js";
+import { resolveUserRoles, getUserAliasByEmail, isEmisor, isAdmin, isEditor } from "@/lib/roles.js";
 
 export async function GET(req) {
   if (!isDbConfigured()) return Response.json([]);
@@ -13,11 +13,7 @@ export async function GET(req) {
   let emisorEmail = null;
   let emisorAlias = null;
   if (session) {
-    const roles = await resolveUserRoles(session);
-    const isEmisor = roles.includes("emisor");
-    const isAdmin = roles.includes("admin");
-    const isEditor = roles.includes("editor");
-    if (isEmisor && !isAdmin && !isEditor) {
+    if (isEmisor(session) && !isAdmin(session) && !isEditor(session)) {
       emisorEmail = session.user?.email || null;
       emisorAlias = session.user?.alias ?? null;
       if (!emisorAlias) {

@@ -66,7 +66,7 @@ export default async function RenovacionesPage({ searchParams }) {
               </div>
             )}
           </div>
-          <Link href="/" className="text-sm text-primary hover:underline">
+          <Link href="/" className="text-sm text-primary hover:underline dark:text-white">
             &larr; Volver al inicio
           </Link>
         </div>
@@ -144,7 +144,7 @@ export default async function RenovacionesPage({ searchParams }) {
               ))}
             </select>
           </div>
-          <button type="submit" className="btn-primary h-9 w-full sm:w-auto">
+          <button type="submit" className="btn-primary h-9 w-full sm:w-auto dark:text-white">
             Filtrar
           </button>
         </form>

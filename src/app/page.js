@@ -10,6 +10,7 @@ import {
   getHoraLlegadaSeries,
 } from "@/lib/bitacora";
 import { isDbConfigured } from "@/lib/db";
+import { hasRole, isAdminArea } from "@/lib/roles";
 import ChartsLoader from "@/components/charts/ChartsLoader";
 import BarsLoader from "@/components/charts/BarsLoader";
 import TypesPieLoader from "@/components/charts/TypesPieLoader";
@@ -72,32 +73,32 @@ export default async function Home(props) {
   const tiposArray = Array.isArray(rawTipos)
     ? rawTipos
     : rawTipos
-    ? [rawTipos]
-    : [];
+      ? [rawTipos]
+      : [];
   const selectedTipos = new Set(tiposArray.map((t) => String(t).toUpperCase()));
   const emisorTipoView =
     selectedTipos.size > 0
       ? emisorTipo.filter(
-          (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
-        )
+        (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
+      )
       : emisorTipo;
   const tiposSerieView =
     selectedTipos.size > 0
       ? tiposSerie.filter(
-          (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
-        )
+        (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
+      )
       : tiposSerie;
   const asesorTipoView =
     selectedTipos.size > 0
       ? asesorTipo.filter(
-          (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
-        )
+        (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
+      )
       : asesorTipo;
   const tiposTotalsView =
     selectedTipos.size > 0
       ? tiposTotals.filter(
-          (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
-        )
+        (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
+      )
       : tiposTotals;
 
   function hrefToggleTipo(tipo) {
@@ -114,7 +115,7 @@ export default async function Home(props) {
   }
 
   const displayName = session.user?.alias ?? session.user?.email;
-  const hasViewerRole = (session.user?.roles || []).includes("viewer");
+  const showEmisorCharts = isAdminArea(session);
 
   return (
     <div className="py-6">
@@ -183,16 +184,15 @@ export default async function Home(props) {
                   <Link
                     key={s.tipo}
                     href={hrefToggleTipo(s.tipo)}
-                    className={`surface surface-type p-3 w-full ${
-                      selectedTipos.size === 0 ||
+                    className={`surface surface-type p-3 w-full ${selectedTipos.size === 0 ||
                       !selectedTipos.has(String(s.tipo || "").toUpperCase())
-                        ? "ring-2 ring-accent"
-                        : "opacity-60"
-                    }`}
+                      ? "ring-2 ring-accent"
+                      : "opacity-60"
+                      }`}
                     data-type={(s.tipo || "").toUpperCase()}
                     data-selected={
                       selectedTipos.size === 0 ||
-                      !selectedTipos.has(String(s.tipo || "").toUpperCase())
+                        !selectedTipos.has(String(s.tipo || "").toUpperCase())
                         ? "true"
                         : "false"
                     }
@@ -220,7 +220,7 @@ export default async function Home(props) {
               )}
             </div>
           )}
-          {!hasViewerRole && (
+          {showEmisorCharts && (
             <div className="mt-10">
               <h2 className="text-xl font-semibold">Actividad por emisor</h2>
               {!dbReady ? (

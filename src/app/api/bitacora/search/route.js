@@ -1,6 +1,6 @@
 import { isDbConfigured } from "@/lib/db.js";
 import { searchBitacoraByIdOrAsunto } from "@/lib/bitacora.js";
-import { getUserAliasByEmail, resolveUserRoles } from "@/lib/roles.js";
+import { getUserAliasByEmail, resolveUserRoles, isEmisor, isAdmin, isEditor } from "@/lib/roles.js";
 import { auth } from "@/../auth";
 
 export async function GET(req) {
@@ -19,11 +19,8 @@ export async function GET(req) {
   if (id == null && asunto == null) return Response.json([], { status: 200 });
   let emisorEmail = null;
   let emisorAlias = null;
-  const roles = await resolveUserRoles(session);
-  const isEmisor = roles.includes("emisor");
-  const isAdmin = roles.includes("admin");
-  const isEditor = roles.includes("editor");
-  if (isEmisor && !isAdmin && !isEditor) {
+
+  if (isEmisor(session) && !isAdmin(session) && !isEditor(session)) {
     emisorEmail = session.user?.email || null;
     emisorAlias = session.user?.alias ?? null;
     if (!emisorAlias) {

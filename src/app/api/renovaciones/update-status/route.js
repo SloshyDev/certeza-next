@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { query } from "@/lib/db";
 import { auth } from "@/../auth";
+import { isAdmin, isCoordinador } from "@/lib/roles";
 
 export async function POST(req) {
   const session = await auth();
@@ -9,8 +10,7 @@ export async function POST(req) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  const roles = session.user?.roles || [];
-  if (!roles.includes("admin") && !roles.includes("coordinador")) {
+  if (!isAdmin(session) && !isCoordinador(session)) {
     return NextResponse.json(
       { error: "No tienes permisos para realizar esta acción" },
       { status: 403 }

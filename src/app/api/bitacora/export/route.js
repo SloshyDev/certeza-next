@@ -1,5 +1,5 @@
 import { auth } from "@/../auth";
-import { hasRole, resolveUserRoles, getUserAliasByEmail } from "@/lib/roles";
+import { hasRole, resolveUserRoles, getUserAliasByEmail, isEmisor, isAdmin, isEditor } from "@/lib/roles";
 import { isDbConfigured, query } from "@/lib/db";
 import { getBitacoraTableData } from "@/lib/bitacora";
 import * as XLSX from "xlsx";
@@ -27,11 +27,8 @@ export async function GET(req) {
 
   let emisorEmail = null;
   let emisorAlias = null;
-  const roles = await resolveUserRoles(session);
-  const isEmisor = roles.includes("emisor");
-  const isAdmin = roles.includes("admin");
-  const isEditor = roles.includes("editor");
-  if (isEmisor && !isAdmin && !isEditor) {
+
+  if (isEmisor(session) && !isAdmin(session) && !isEditor(session)) {
     emisorEmail = session.user?.email || null;
     emisorAlias = session.user?.alias ?? null;
     if (!emisorAlias) {

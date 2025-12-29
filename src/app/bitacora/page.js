@@ -1,6 +1,10 @@
 import BitacoraGroupedView from "@/components/BitacoraGroupedView";
 import { getBitacoraTableData } from "@/lib/bitacora";
-import { getUserAliasByEmail, resolveUserRoles } from "@/lib/roles";
+import {
+  isAdmin,
+  isEmisor,
+  isAdminArea,
+} from "@/lib/roles";
 import { auth } from "@/../auth";
 import AddBitacoraButton from "@/components/AddBitacoraButton";
 import ExportBitacoraButton from "@/components/ExportBitacoraButton";
@@ -31,19 +35,18 @@ export default async function Page(props) {
   const end = normalizeDate(searchParams?.endDate, today);
   const start = normalizeDate(searchParams?.startDate, today);
 
-  const userRoles = await resolveUserRoles(session);
-  const isAdmin = userRoles.includes("admin");
-  const isCoordinador = userRoles.includes("coordinador");
-  const isSupervisorEmisor = userRoles.includes("supervisor_emi");
-  const isEmisor = userRoles.includes("emisor");
   let emisorEmail = null;
-  if (isEmisor && !isAdmin && !isCoordinador) {
+  const canViewAll = isAdminArea(session);
+  const isEmisorUser = isEmisor(session);
+
+  if (isEmisorUser && !canViewAll) {
     emisorEmail = session.user?.email || null;
   }
+
   const data = await getBitacoraTableData(start, end, emisorEmail);
-  const canDelete = isAdmin;
-  const canCreate = isAdmin || isCoordinador || isEmisor || isSupervisorEmisor;
-  const canEdit = isAdmin || isCoordinador || isEmisor || isSupervisorEmisor;
+  const canDelete = isAdmin(session);
+  const canCreate = canViewAll || isEmisorUser;
+  const canEdit = canCreate;
 
 
   return (
