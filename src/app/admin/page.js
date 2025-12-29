@@ -96,7 +96,7 @@ function UsersList({ users, roles }) {
               <th className="p-3 w-16 text-muted-foreground font-medium">ID</th>
               <th className="p-3 text-muted-foreground font-medium">Email</th>
               <th className="p-3 text-muted-foreground font-medium">Nombre</th>
-              <th className="p-3 text-muted-foreground font-medium">Alias</th>
+              <th className="p-3 text-muted-foreground font-medium">Asignación</th>
               <th className="p-3 text-muted-foreground font-medium">Roles</th>
               <th className="p-3 text-muted-foreground font-medium">
                 Editar rol
@@ -112,12 +112,21 @@ function UsersList({ users, roles }) {
                 <td className="p-3 text-muted-foreground">{u.id}</td>
                 <td className="p-3 text-foreground font-medium">{u.email}</td>
                 <td className="p-3 text-foreground">{u.name}</td>
+
                 <td className="p-3">
-                  <AliasForm
-                    userId={u.id}
-                    email={u.email}
-                    initialAlias={u.alias || ""}
-                  />
+                  {u.assignment_active === true && (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">
+                      Activo
+                    </span>
+                  )}
+                  {u.assignment_active === false && (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700">
+                      Inactivo
+                    </span>
+                  )}
+                  {(u.assignment_active === null || u.assignment_active === undefined) && (
+                    <span className="text-muted-foreground text-xs">-</span>
+                  )}
                 </td>
                 <td className="p-3 text-muted-foreground">
                   {(u.roles || []).join(", ")}
@@ -138,7 +147,7 @@ function UsersList({ users, roles }) {
                       options={roles.map((r) => r.name)}
                       ariaLabel="Seleccionar rol"
                     />
-                    <Button variant="accent" type="submit">
+                    <Button variant="accent" className="dark:text-white" type="submit">
                       Guardar
                     </Button>
                   </form>
@@ -176,7 +185,7 @@ function AliasForm({ userId, email, initialAlias }) {
         placeholder="Alias"
         className="border rounded px-2 py-1"
       />
-      <Button variant="secondary" type="submit">
+      <Button variant="secondary" className="dark:text-white" type="submit">
         Guardar
       </Button>
     </form>

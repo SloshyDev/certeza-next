@@ -172,11 +172,13 @@ export async function listUsers() {
        u.email,
        u.name,
        COALESCE(u.alias, '') AS alias,
+       b.status as assignment_active,
        COALESCE(ARRAY_AGG(r.name ORDER BY r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles
      FROM users_auth u
      LEFT JOIN user_roles ur ON ur.user_id = u.id
      LEFT JOIN roles r ON r.id = ur.role_id
-     GROUP BY u.id
+     LEFT JOIN users b ON LOWER(b.mail) = LOWER(u.email)
+     GROUP BY u.id, b.status
      ORDER BY u.email ASC`
   );
   return res.rows.map((row) => ({
@@ -184,6 +186,7 @@ export async function listUsers() {
     email: row.email,
     name: row.name,
     alias: row.alias || "",
+    assignment_active: row.assignment_active,
     roles: row.roles,
   }));
 }
