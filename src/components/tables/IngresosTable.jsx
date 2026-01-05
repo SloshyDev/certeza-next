@@ -13,6 +13,7 @@ const columnHelper = createColumnHelper();
 
 const STATUS_OPTIONS = [
     "INGRESO",
+    "INGRESO DIGITAL",
     "EN COMERCIAL",
     "REGRESO ASESOR",
     "SIN INGRESO",

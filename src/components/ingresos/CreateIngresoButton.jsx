@@ -11,7 +11,7 @@ export default function CreateIngresoButton({ asesores }) {
     const router = useRouter();
 
     const [form, setForm] = useState({
-        fecha_ingreso: new Date().toISOString().slice(0, 10),
+        fecha_ingreso_digital: new Date().toISOString().slice(0, 10),
         asesor_id: "",
         folio: "",
         poliza: "",
@@ -81,12 +81,12 @@ export default function CreateIngresoButton({ asesores }) {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-xs font-medium text-muted-foreground">Fecha Ingreso *</label>
+                                    <label className="text-xs font-medium text-muted-foreground">Fecha Ingreso Digital</label>
                                     <input
                                         type="date"
-                                        name="fecha_ingreso"
+                                        name="fecha_ingreso_digital"
                                         required
-                                        value={form.fecha_ingreso}
+                                        value={form.fecha_ingreso_digital}
                                         onChange={handleChange}
                                         className="w-full h-9 rounded border border-border bg-background px-3 text-sm focus:ring-2 focus:ring-accent"
                                     />

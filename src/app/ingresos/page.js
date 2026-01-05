@@ -161,6 +161,7 @@ export default async function Page(props) {
                         >
                             <option value="">TODOS</option>
                             <option value="INGRESO">INGRESO</option>
+                            <option value="INGRESO DIGITAL">INGRESO DIGITAL</option>
                             <option value="EN COMERCIAL">EN COMERCIAL</option>
                             <option value="REGRESO ASESOR">REGRESO ASESOR</option>
                             <option value="SIN INGRESO">SIN INGRESO</option>

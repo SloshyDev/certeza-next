@@ -20,7 +20,7 @@ export async function POST(req) {
     try {
         const body = await req.json();
         const {
-            fecha_ingreso,
+            fecha_ingreso_digital,
             asesor_id,
             folio,
             poliza,
@@ -31,13 +31,13 @@ export async function POST(req) {
         } = body;
 
         // Basic verification
-        if (!fecha_ingreso || !asesor_id) {
+        if (!fecha_ingreso_digital || !asesor_id) {
             return NextResponse.json({ error: "Fecha y Asesor son requeridos" }, { status: 400 });
         }
 
         const res = await query(
             `INSERT INTO ingresos (
-                fecha_ingreso, 
+                fecha_ingreso_digital, 
                 asesor_id, 
                 folio, 
                 poliza, 
@@ -48,7 +48,7 @@ export async function POST(req) {
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
             RETURNING *`,
             [
-                fecha_ingreso,
+                fecha_ingreso_digital,
                 asesor_id,
                 folio || null,
                 poliza || null,
