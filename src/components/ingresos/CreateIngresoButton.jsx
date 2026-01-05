@@ -165,6 +165,7 @@ export default function CreateIngresoButton({ asesores }) {
                                         className="w-full h-9 rounded border border-border bg-background px-3 text-sm focus:ring-2 focus:ring-accent"
                                     >
                                         <option value="INGRESO">INGRESO</option>
+                                        <option value="INGRESO DIGITAL">INGRESO DIGITAL</option>
                                         <option value="EN COMERCIAL">EN COMERCIAL</option>
                                         <option value="REGRESO ASESOR">REGRESO ASESOR</option>
                                         <option value="SIN INGRESO">SIN INGRESO</option>

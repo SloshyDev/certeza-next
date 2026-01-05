@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { auth, signIn } from "@/../auth";
+import { auth } from "@/../auth";
 import { redirect } from "next/navigation";
 import {
   getBitacoraStatsByTipo,
@@ -10,7 +9,7 @@ import {
   getHoraLlegadaSeries,
 } from "@/lib/bitacora";
 import { isDbConfigured } from "@/lib/db";
-import { hasRole, isAdminArea } from "@/lib/roles";
+import { isAdminArea } from "@/lib/roles";
 import ChartsLoader from "@/components/charts/ChartsLoader";
 import BarsLoader from "@/components/charts/BarsLoader";
 import TypesPieLoader from "@/components/charts/TypesPieLoader";
@@ -21,105 +20,58 @@ import { getRenovacionesStats, getRenovacionesByMes } from "@/lib/renovaciones";
 import { getIngresosStats } from "@/lib/ingresos";
 import IngresosDashboard from "@/components/charts/IngresosDashboard";
 
+// Components & Utils
+import DateFilter from "@/components/dashboard/DateFilter";
+import StatsGrid from "@/components/dashboard/StatsGrid";
+import {
+  getDateRange,
+  getSelectedTypes,
+  filterBySelectedTypes
+} from "@/lib/dashboard-utils";
+
 export default async function Home(props) {
   const session = await auth();
 
-  console.log(session);
-
-  // Si no hay sesión, redirigir al login
+  // Authorization check
   if (!session) {
     redirect("/auth/sign-in");
   }
 
-  const searchParams =
-    props && props.searchParams ? await props.searchParams : {};
-  const today = new Date().toISOString().slice(0, 10);
-  const defaultStart = today;
-  const rawStart = searchParams && searchParams.start;
-  const rawEnd = searchParams && searchParams.end;
-  const normalize = (val, fallback) => {
-    const v = Array.isArray(val) ? val[0] : val;
-    return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)
-      ? v
-      : fallback;
-  };
-  let start = normalize(rawStart, defaultStart);
-  let end = normalize(rawEnd, today);
-  if (start > end) {
-    const tmp = start;
-    start = end;
-    end = tmp;
-  }
-  const isSingleDay = start === end;
+  // Parse parameters
+  const searchParams = props?.searchParams ? await props.searchParams : {};
+  const { start, end, isSingleDay } = getDateRange(searchParams);
   const dbReady = isDbConfigured();
-  const stats =
-    session && dbReady ? await getBitacoraStatsByTipo(start, end) : [];
-  const emisorTipo =
-    session && dbReady ? await getBitacoraByEmisorTipo(start, end) : [];
-  const tiposSerie =
-    session && dbReady && !isSingleDay
-      ? await getTiposSeriePorDia(start, end)
-      : [];
-  const asesorTipo =
-    session && dbReady ? await getBitacoraByAsesorTipo(start, end) : [];
-  const tiposTotals =
-    session && dbReady ? await getTiposTotals(start, end) : [];
-  const horaLlegadaSeries =
-    session && dbReady ? await getHoraLlegadaSeries(start, end) : [];
-  const renovacionesStats =
-    session && dbReady ? await getRenovacionesStats() : [];
-  const renovacionesByMes =
-    session && dbReady ? await getRenovacionesByMes() : [];
-  const ingresosStats =
-    session && dbReady ? await getIngresosStats(start, end) : { byStatus: [], byCompania: [], byAsesor: [] };
 
+  // Data Fetching
+  const [
+    stats,
+    emisorTipo,
+    tiposSerie,
+    asesorTipo,
+    tiposTotals,
+    horaLlegadaSeries,
+    renovacionesStats,
+    renovacionesByMes,
+    ingresosStats
+  ] = session && dbReady ? await Promise.all([
+    getBitacoraStatsByTipo(start, end),
+    getBitacoraByEmisorTipo(start, end),
+    !isSingleDay ? getTiposSeriePorDia(start, end) : [],
+    getBitacoraByAsesorTipo(start, end),
+    getTiposTotals(start, end),
+    getHoraLlegadaSeries(start, end),
+    getRenovacionesStats(),
+    getRenovacionesByMes(),
+    getIngresosStats(start, end)
+  ]) : [[], [], [], [], [], [], [], [], { byStatus: [], byCompania: [], byAsesor: [] }];
 
-  const rawTipos = searchParams.tipo;
-  const tiposArray = Array.isArray(rawTipos)
-    ? rawTipos
-    : rawTipos
-      ? [rawTipos]
-      : [];
-  const selectedTipos = new Set(tiposArray.map((t) => String(t).toUpperCase()));
-  const emisorTipoView =
-    selectedTipos.size > 0
-      ? emisorTipo.filter(
-        (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
-      )
-      : emisorTipo;
-  const tiposSerieView =
-    selectedTipos.size > 0
-      ? tiposSerie.filter(
-        (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
-      )
-      : tiposSerie;
-  const asesorTipoView =
-    selectedTipos.size > 0
-      ? asesorTipo.filter(
-        (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
-      )
-      : asesorTipo;
-  const tiposTotalsView =
-    selectedTipos.size > 0
-      ? tiposTotals.filter(
-        (r) => !selectedTipos.has(String(r.tipo || "").toUpperCase())
-      )
-      : tiposTotals;
+  // View Filtering
+  const selectedTipos = getSelectedTypes(searchParams);
+  const emisorTipoView = filterBySelectedTypes(emisorTipo, selectedTipos);
+  const tiposSerieView = filterBySelectedTypes(tiposSerie, selectedTipos);
+  const asesorTipoView = filterBySelectedTypes(asesorTipo, selectedTipos);
+  const tiposTotalsView = filterBySelectedTypes(tiposTotals, selectedTipos);
 
-  function hrefToggleTipo(tipo) {
-    const key = String(tipo || "").toUpperCase();
-    const next = new Set(selectedTipos);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    const params = new URLSearchParams();
-    params.set("start", start);
-    params.set("end", end);
-    for (const v of Array.from(next)) params.append("tipo", v);
-    const qs = params.toString();
-    return `/?${qs}`;
-  }
-
-  const displayName = session.user?.alias ?? session.user?.email;
   const showEmisorCharts = isAdminArea(session);
 
   return (
@@ -127,100 +79,28 @@ export default async function Home(props) {
       <main className="container-responsive px-4 sm:px-6">
         <h1 className="text-center">Balance general</h1>
 
-
         <div className="mt-8">
-          <form
-            method="get"
-            className="mt-2 flex flex-col sm:flex-row flex-wrap sm:items-end items-center justify-center gap-3"
-          >
-            <div className="flex flex-col gap-1 w-full sm:w-auto">
-              <label htmlFor="start" className="text-sm opacity-80">
-                Desde
-              </label>
-              <input
-                id="start"
-                name="start"
-                type="date"
-                defaultValue={start}
-                className="h-10 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-              />
-            </div>
-            <div className="flex flex-col gap-1 w-full sm:w-auto">
-              <label htmlFor="end" className="text-sm opacity-80">
-                Hasta
-              </label>
-              <input
-                id="end"
-                name="end"
-                type="date"
-                defaultValue={end}
-                className="h-10 rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent"
-              />
-            </div>
-            <div className="flex flex-col gap-1 w-full sm:w-auto">
-              <label className="text-sm opacity-0 select-none">Aplicar</label>
-              <button type="submit" className="btn-secondary h-10">
-                Aplicar
-              </button>
-            </div>
-          </form>
+          {/* Date Filter */}
+          <DateFilter start={start} end={end} />
+
           <h2 className="mt-4 text-xl font-semibold">
             Actividad por tipo (rango seleccionado)
           </h2>
+
           {!dbReady ? (
             <p className="mt-2 opacity-80">
               Configura DATABASE_URL para consultar la base de datos.
             </p>
           ) : (
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-              {stats.length === 0 ? (
-                <div className="rounded-lg border border-border p-4">
-                  <p className="opacity-80">
-                    Sin registros para el rango seleccionado.
-                  </p>
-                </div>
-              ) : (
-                stats.map((s) => (
-                  <Link
-                    key={s.tipo}
-                    href={hrefToggleTipo(s.tipo)}
-                    className={`surface surface-type p-3 w-full ${selectedTipos.size === 0 ||
-                      !selectedTipos.has(String(s.tipo || "").toUpperCase())
-                      ? "ring-2 ring-accent"
-                      : "opacity-60"
-                      }`}
-                    data-type={(s.tipo || "").toUpperCase()}
-                    data-selected={
-                      selectedTipos.size === 0 ||
-                        !selectedTipos.has(String(s.tipo || "").toUpperCase())
-                        ? "true"
-                        : "false"
-                    }
-                    role="button"
-                    aria-pressed={
-                      selectedTipos.size === 0 ||
-                      !selectedTipos.has(String(s.tipo || "").toUpperCase())
-                    }
-                    aria-label={`Filtrar por tipo ${(
-                      s.tipo || "(vacío)"
-                    ).toString()}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs opacity-80">Tipo</div>
-                      <div className="text-xs opacity-80">Registros</div>
-                    </div>
-                    <div className="mt-0.5 flex items-center justify-between">
-                      <div className="text-sm font-medium">
-                        {s.tipo || "(vacío)"}
-                      </div>
-                      <div className="text-base font-semibold">{s.total}</div>
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
+            <StatsGrid
+              stats={stats}
+              selectedTipos={selectedTipos}
+              start={start}
+              end={end}
+            />
           )}
 
+          {/* Emisor Charts */}
           {showEmisorCharts && (
             <div className="mt-10">
               <h2 className="text-xl font-semibold">Actividad por emisor</h2>
@@ -233,6 +113,8 @@ export default async function Home(props) {
               )}
             </div>
           )}
+
+          {/* Detailed Analysis */}
           <div className="mt-10">
             <h2 className="text-xl font-semibold">Análisis detallado</h2>
             {!dbReady ? (
@@ -268,7 +150,9 @@ export default async function Home(props) {
               </div>
             )}
           </div>
-          {!isSingleDay ? (
+
+          {/* Daily Evolution */}
+          {!isSingleDay && (
             <div className="mt-10">
               <h2 className="text-xl font-semibold">
                 Evolución diaria por tipo
@@ -281,7 +165,7 @@ export default async function Home(props) {
                 <ChartsLoader data={tiposSerieView} start={start} end={end} />
               )}
             </div>
-          ) : null}
+          )}
 
           {/* Ingresos Dashboard Section */}
           {dbReady && (
