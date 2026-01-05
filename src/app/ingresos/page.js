@@ -10,12 +10,7 @@ import CreateIngresoButton from "@/components/ingresos/CreateIngresoButton";
 
 export const dynamic = "force-dynamic";
 
-function normalizeDate(dateStr, fallback) {
-    if (!dateStr) return fallback;
-    // Simple check for YYYY-MM-DD
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-    return fallback;
-}
+
 
 export default async function Page(props) {
     const searchParams = await props.searchParams;
@@ -26,16 +21,11 @@ export default async function Page(props) {
 
     const canEdit = canEditMesaVales(session);
 
-    // Default range: 1st of current month to today (or end of month)
-    // Matching logic from other pages
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const firstDay = `${yyyy}-${mm}-01`;
-    const today = now.toISOString().slice(0, 10);
-
-    const start = normalizeDate(searchParams?.startDate, firstDay);
-    const end = normalizeDate(searchParams?.endDate, today);
+    // Optional date filtering
+    // If startDate/endDate provided in params, use them. Otherwise undefined.
+    // getIngresosTableData handles undefined by returning all records (or limiting by other filters)
+    const start = searchParams?.startDate || undefined;
+    const end = searchParams?.endDate || undefined;
 
     // Filters
     const asesor = searchParams?.asesor || "";

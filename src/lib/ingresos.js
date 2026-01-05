@@ -4,7 +4,7 @@ export async function getIngresosTableData(startDate, endDate, filters = {}) {
     if (!isDbConfigured()) return [];
 
     const { asesor, folio, poliza, compania, estatus, solicitud } = filters;
-    const params = [startDate, endDate];
+    const params = [];
     let queryStr = `SELECT 
        i.id,
        to_char(i.fecha_ingreso, 'YYYY-MM-DD') as fecha_ingreso,
@@ -23,9 +23,15 @@ export async function getIngresosTableData(startDate, endDate, filters = {}) {
        a.nombre as asesor
      FROM ingresos i
      LEFT JOIN asesor a ON a.id = i.asesor_id
-     WHERE i.fecha_ingreso BETWEEN $1 AND $2`;
+     WHERE 1=1`;
 
-    let paramIndex = 3;
+    let paramIndex = 1;
+
+    if (startDate && endDate) {
+        queryStr += ` AND i.fecha_ingreso BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
+        params.push(startDate, endDate);
+        paramIndex += 2;
+    }
 
     if (asesor) {
         if (/^\d+$/.test(asesor)) {

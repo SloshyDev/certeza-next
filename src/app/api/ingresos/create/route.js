@@ -44,10 +44,8 @@ export async function POST(req) {
                 compania, 
                 tipo_solicitud, 
                 tipo_ingreso_reingreso, 
-                observacion,
-                created_at,
-                updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) 
+                observacion
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
             RETURNING *`,
             [
                 fecha_ingreso,
