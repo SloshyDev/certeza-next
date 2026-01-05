@@ -1,5 +1,6 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import {
     flexRender,
     getCoreRowModel,
@@ -324,6 +325,27 @@ export default function IngresosTable({ data, asesores = [], canEdit }) {
         );
     };
 
+    const handleDelete = async (id) => {
+        if (!confirm("¿Estás seguro de eliminar este registro?")) return;
+
+        try {
+            const res = await fetch(`/api/ingresos/delete?id=${id}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) {
+                const json = await res.json();
+                throw new Error(json.error || "Error al eliminar");
+            }
+
+            // Remove from local state
+            setTableData((prev) => prev.filter((row) => row.id !== id));
+        } catch (error) {
+            console.error(error);
+            alert("Error eliminando registro: " + error.message);
+        }
+    };
+
     const columns = useMemo(
         () => [
             columnHelper.accessor("tipo_ingreso_reingreso", {
@@ -462,6 +484,21 @@ export default function IngresosTable({ data, asesores = [], canEdit }) {
                         canEdit={canEdit}
                         onUpdate={handleUpdate}
                     />
+                ),
+            }),
+            columnHelper.display({
+                id: "actions",
+                header: "",
+                cell: (info) => (
+                    canEdit && (
+                        <button
+                            onClick={() => handleDelete(info.row.original.id)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="Eliminar registro"
+                        >
+                            <TrashIcon className="h-4 w-4" />
+                        </button>
+                    )
                 ),
             }),
         ],

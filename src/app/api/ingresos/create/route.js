@@ -35,6 +35,21 @@ export async function POST(req) {
             return NextResponse.json({ error: "Fecha y Asesor son requeridos" }, { status: 400 });
         }
 
+        // Check for duplicates
+        if (folio) {
+            const existingFolio = await query(`SELECT id FROM ingresos WHERE folio = $1`, [folio]);
+            if (existingFolio.rowCount > 0) {
+                return NextResponse.json({ error: `El folio ${folio} ya está registrado` }, { status: 400 });
+            }
+        }
+
+        if (poliza) {
+            const existingPoliza = await query(`SELECT id FROM ingresos WHERE poliza = $1`, [poliza]);
+            if (existingPoliza.rowCount > 0) {
+                return NextResponse.json({ error: `La póliza ${poliza} ya está registrada` }, { status: 400 });
+            }
+        }
+
         const res = await query(
             `INSERT INTO ingresos (
                 fecha_ingreso_digital, 
