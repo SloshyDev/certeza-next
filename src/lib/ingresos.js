@@ -20,6 +20,7 @@ export async function getIngresosTableData(startDate, endDate, filters = {}) {
        to_char(i.fecha_reingreso, 'YYYY-MM-DD') as fecha_reingreso,
        to_char(i.fecha_ingreso_digital, 'YYYY-MM-DD') as fecha_ingreso_digital,
        to_char(i.fecha_comercial, 'YYYY-MM-DD') as fecha_comercial,
+       i.asesor_id,
        a.nombre as asesor
      FROM ingresos i
      LEFT JOIN asesor a ON a.id = i.asesor_id

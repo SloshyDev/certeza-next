@@ -230,8 +230,78 @@ const EditableTextArea = ({ value, rowId, field, canEdit, onUpdate, className = 
     );
 };
 
+// Editable Asesor Select Component
+const EditableAsesorSelect = ({ value, rowId, asesores, canEdit, onUpdate, className = "" }) => {
+    const [currentValue, setCurrentValue] = useState(value);
+    const [loading, setLoading] = useState(false);
 
-export default function IngresosTable({ data, canEdit }) {
+    useEffect(() => {
+        setCurrentValue(value);
+    }, [value]);
+
+    const handleChange = async (e) => {
+        const newValue = e.target.value; // This is the advisor ID (string or number)
+        if (newValue == currentValue) return;
+
+        setLoading(true);
+        setCurrentValue(newValue);
+
+        try {
+            const res = await fetch("/api/ingresos/update", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: rowId, field: "asesor_id", value: newValue }),
+            });
+
+            if (!res.ok) throw new Error("Failed to update");
+
+            // Find the selected advisor object to get the name
+            const selectedAsesor = asesores.find(a => String(a.id) === String(newValue));
+
+            if (onUpdate) {
+                // Update the ID
+                onUpdate(rowId, "asesor_id", newValue);
+                // Also update the Name for display
+                if (selectedAsesor) {
+                    onUpdate(rowId, "asesor", selectedAsesor.nombre);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Error actualizando asesor");
+            setCurrentValue(value); // Revert
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!canEdit) {
+        // Find name from asesores list or use the one in the row if we don't have the list logic here
+        // But better to just assume the parent passed the name in a text field if not editable? 
+        // Actually, we can use the `asesores` list to show the name corresponding to `value` (id)
+        const asesor = asesores?.find(a => String(a.id) === String(value));
+        return <span>{asesor ? asesor.nombre.slice(0, 10) : "-"}</span>;
+    }
+
+    return (
+        <select
+            value={currentValue || ""}
+            onChange={handleChange}
+            disabled={loading}
+            className={`bg-transparent border-none p-0 text-xs font-medium focus:ring-0 cursor-pointer text-foreground ${loading ? "opacity-50" : ""} ${className}`}
+        >
+            <option value="" disabled>Seleccionar</option>
+            {asesores?.map((a) => (
+                <option key={a.id} value={a.id} className="text-foreground bg-background">
+                    {a.nombre}
+                </option>
+            ))}
+        </select>
+    );
+};
+
+
+export default function IngresosTable({ data, asesores = [], canEdit }) {
     const [sorting, setSorting] = useState([]);
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 20 });
     const [tableData, setTableData] = useState(data);
@@ -284,7 +354,16 @@ export default function IngresosTable({ data, canEdit }) {
             }),
             columnHelper.accessor("asesor", {
                 header: "Asesor",
-                cell: (info) => (info.getValue() || "Sin asesor").slice(0, 10),
+                cell: (info) => (
+                    <EditableAsesorSelect
+                        value={info.row.original.asesor_id}
+                        rowId={info.row.original.id}
+                        asesores={asesores}
+                        canEdit={canEdit}
+                        onUpdate={handleUpdate}
+                        className="w-32"
+                    />
+                ),
             }),
             columnHelper.accessor("poliza", {
                 header: "Póliza",

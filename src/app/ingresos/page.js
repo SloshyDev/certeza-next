@@ -195,7 +195,7 @@ export default async function Page(props) {
                 </form>
             </div>
 
-            <IngresosTable data={data} canEdit={canEdit} />
+            <IngresosTable data={data} asesores={asesores} canEdit={canEdit} />
 
             <a
                 href={`/api/ingresos/export?${queryParams}`}

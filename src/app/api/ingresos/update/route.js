@@ -14,6 +14,7 @@ const ALLOWED_FIELDS = {
     fecha_ingreso_digital: "fecha_ingreso_digital",
     fecha_comercial: "fecha_comercial",
     fecha_mesa_vales: "fecha_mesa_vales",
+    asesor_id: "asesor_id",
 };
 
 export async function PATCH(req) {
