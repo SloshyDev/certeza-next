@@ -7,8 +7,8 @@ export async function getCorreosProcesados(limit = 100) {
         id,
         remitente,
         asunto,
-        to_char(fecha_recibido, 'YYYY-MM-DD HH24:MI:SS') as fecha_recibido,
-        to_char(fecha_procesado, 'YYYY-MM-DD HH24:MI:SS') as fecha_procesado,
+        to_char(fecha_recibido AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City', 'YYYY-MM-DD HH24:MI:SS') as fecha_recibido,
+        to_char(fecha_procesado AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City', 'YYYY-MM-DD HH24:MI:SS') as fecha_procesado,
         buzon,
         asignado,
         razon_no_asignacion
@@ -29,8 +29,8 @@ export async function getCorreosRechazados(limit = 100) {
         de,
         para,
         asunto,
-        to_char(fecha_recepcion, 'YYYY-MM-DD HH24:MI:SS') as fecha_recepcion,
-        to_char(fecha_rechazo, 'YYYY-MM-DD HH24:MI:SS') as fecha_rechazo,
+        to_char(fecha_recepcion AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City', 'YYYY-MM-DD HH24:MI:SS') as fecha_recepcion,
+        to_char(fecha_rechazo AT TIME ZONE 'UTC' AT TIME ZONE 'America/Mexico_City', 'YYYY-MM-DD HH24:MI:SS') as fecha_rechazo,
         motivo_rechazo,
         buzon,
         clave_asesor
