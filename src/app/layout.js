@@ -114,6 +114,13 @@ export default async function RootLayout({ children }) {
                         />
                         Asesores
                       </Link>
+                      <Link href="/correos" className="btn-secondary gap-2">
+                        <ArchiveBoxIcon
+                          className="h-4 w-4 text-foreground"
+                          aria-hidden="true"
+                        />
+                        Gestionar Correos
+                      </Link>
                       {isAdmin(session) ? (
                         <Link href="/admin" className="btn-secondary gap-2">
                           <Cog6ToothIcon
@@ -174,6 +181,16 @@ export default async function RootLayout({ children }) {
                               aria-hidden="true"
                             />
                             Asesores
+                          </Link>
+                          <Link
+                            href="/correos"
+                            className="btn-secondary w-full mt-2 gap-2"
+                          >
+                            <ArchiveBoxIcon
+                              className="h-4 w-4 text-foreground"
+                              aria-hidden="true"
+                            />
+                            Auditoría Correos
                           </Link>
                           {isAdmin(session) ? (
                             <Link
