@@ -42,7 +42,9 @@ export default function PolizasPage() {
       return;
     }
     if (session && !session.user?.roles?.includes("admin")) {
-      alert("No tienes permisos para acceder a esta página. Solo usuarios con rol Admin pueden ver pólizas.");
+      alert(
+        "No tienes permisos para acceder a esta página. Solo usuarios con rol Admin pueden ver pólizas."
+      );
       router.push("/");
       return;
     }

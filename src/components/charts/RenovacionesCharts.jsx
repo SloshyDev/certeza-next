@@ -8,7 +8,31 @@ export default function RenovacionesCharts({ stats, byMes }) {
   // Extract available months from data
   const availableMonths = useMemo(() => {
     const months = new Set(byMes.map((m) => m.mes));
-    return Array.from(months).sort(); // Sort naturally or implement custom date sort
+
+    // Custom sort logic
+    const monthMap = {
+      ENERO: 0, FEBRERO: 1, MARZO: 2, ABRIL: 3, MAYO: 4, JUNIO: 5,
+      JULIO: 6, AGOSTO: 7, SEPTIEMBRE: 8, OCTUBRE: 9, NOVIEMBRE: 10, DICIEMBRE: 11
+    };
+
+    return Array.from(months).sort((a, b) => {
+      // Parse "MES AÑO" e.g. "ENERO 2025"
+      const [ma, ya] = a.trim().toUpperCase().split(/\s+/);
+      const [mb, yb] = b.trim().toUpperCase().split(/\s+/);
+
+      const yearA = parseInt(ya) || 0;
+      const yearB = parseInt(yb) || 0;
+
+      if (yearA !== yearB) {
+        return yearB - yearA; // Newest year first
+      }
+
+      // Same year, check month
+      const idxA = monthMap[ma] ?? -1;
+      const idxB = monthMap[mb] ?? -1;
+
+      return idxB - idxA; // Newest month first
+    });
   }, [byMes]);
 
   // State for selected month

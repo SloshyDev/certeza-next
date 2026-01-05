@@ -60,8 +60,11 @@ export default function UpdateRenovaciones() {
         const keys = Object.keys(row);
         // Busca columna que contenga "POLIZA" (case insensitive)
         const polizaKey = keys.find((k) => k.toUpperCase().includes("POLIZA"));
-        // Busca columna "ESTATUS"
-        const statusKey = keys.find((k) => k.toUpperCase() === "ESTATUS");
+        // Busca columna "DOCUMENTOS FALTANTES"
+        const statusKey = keys.find((k) =>
+          k.toUpperCase().includes("DOCUMENTOS FALTANTES") ||
+          k.toUpperCase().includes("DOCS FALTANTES")
+        );
 
         if (!polizaKey) continue;
 
@@ -70,21 +73,17 @@ export default function UpdateRenovaciones() {
 
         let estatus = rawStatus;
 
-        // Lógica de negocio (Client-side)
         if (!rawStatus) {
-          // Si está vacío, decidimos si enviar PENDIENTE o dejarlo vacío. 
-          // El usuario dijo "cualquier otra cosa... mandalo asi". 
-          // Si viene vacío en el excel, probablemente sea mejor ignorarlo o ponerlo PENDIENTE.
-          // Asumiremos que si está vacío se queda como PENDIENTE para evitar borrarlos.
           estatus = "PENDIENTE";
         } else {
           const upperStatus = rawStatus.toUpperCase();
-          if (upperStatus === "FOLIO COMPLETO" || upperStatus === "RECHAZO PARITARIA") {
+          if (upperStatus === "FOLIO COMPLETO" || upperStatus === "RECHAZO PARITARIA" || upperStatus === "RECHAZO PARITARITA") {
             estatus = "COLOCADA";
           } else if (upperStatus === "FALTAN DOCUMENTOS") {
             estatus = "PENDIENTE";
+          } else {
+            estatus = upperStatus;
           }
-          // "cualquier otra cosa que diga en el estatus mandalo asi" -> estatus ya es rawStatus
         }
 
         cleanUpdates.push({ poliza, estatus });
@@ -189,10 +188,10 @@ export default function UpdateRenovaciones() {
                         <li>
                           Sube un Excel con las columnas:{" "}
                           <strong>NO DE POLIZA</strong> y{" "}
-                          <strong>ESTATUS</strong>. (Puede incluir otras como quincena, cia, etc, pero estas son las usadas).
+                          <strong>DOCUMENTOS FALTANTES</strong>.
                         </li>
                         <li>
-                          El contenido de <strong>ESTATUS</strong> define la actualización.
+                          El contenido de <strong>DOCUMENTOS FALTANTES</strong> define la actualización.
                         </li>
                         <li>
                           Si dice <strong>"FOLIO COMPLETO"</strong> o <strong>"RECHAZO PARITARIA"</strong> &rarr;
@@ -203,7 +202,7 @@ export default function UpdateRenovaciones() {
                           Se guarda como <strong>PENDIENTE</strong>.
                         </li>
                         <li>
-                          Cualquier otro valor se guarda textualmente como el estatus.
+                          Cualquier otro valor se guarda tal cual como el estatus (ej. "CANCELADA", etc).
                         </li>
                       </ul>
                     </div>

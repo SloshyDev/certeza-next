@@ -37,6 +37,7 @@ export async function GET(req) {
         p.asesor_id,
         a.nombre as asesor_nombre,
         a.clave as asesor_clave,
+        a.email as asesor_email,
         COUNT(r.id) as total_recibos,
         SUM(CASE WHEN r.estatus_pago = 'PAGADO' THEN 1 ELSE 0 END) as recibos_pagados,
         SUM(CASE WHEN r.estatus_comision = 'PAGADO' THEN 1 ELSE 0 END) as comisiones_pagadas,
@@ -69,7 +70,7 @@ export async function GET(req) {
       LEFT JOIN recibos r ON r.poliza_id = p.id
       WHERE EXISTS (SELECT 1 FROM recibos WHERE poliza_id = p.id)
       GROUP BY p.id, p.no_poliza, p.cia, p.forma_pago, p.estatus, p.folio, p.quincena,
-               p.f_desde, p.f_hasta, p.prima_total, p.prima_neta, p.commission_percentage, p.asesor_id, a.nombre, a.clave
+               p.f_desde, p.f_hasta, p.prima_total, p.prima_neta, p.commission_percentage, p.asesor_id, a.nombre, a.clave, a.email
       ORDER BY p.no_poliza DESC
       LIMIT $1 OFFSET $2
       `,

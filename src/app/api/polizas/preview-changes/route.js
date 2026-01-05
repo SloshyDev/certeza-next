@@ -43,7 +43,7 @@ export async function POST(req) {
 
     // Obtener todas las pólizas existentes
     const polizasExistentes = await query(
-      `SELECT id, no_poliza, cia, forma_pago, f_desde, f_hasta, prima_total, 
+      `SELECT id, no_poliza, cia, forma_pago, f_desde, f_hasta, f_ingreso, f_vale_recibido, prima_total, 
               prima_neta, estatus, folio, commission_percentage, quincena, asesor_id
        FROM polizas`
     );
@@ -53,9 +53,35 @@ export async function POST(req) {
       polizasMap[String(p.no_poliza)] = p;
     });
 
+    // Obtener catálogo de asesores para mapeo Clave -> ID y ID -> Nombre
+    const asesoresRes = await query(`SELECT id, nombre, clave FROM asesor`);
+    const asesoresByClave = {};
+    const asesoresById = {};
+
+    asesoresRes.rows.forEach(asesor => {
+      if (asesor.clave) {
+        asesoresByClave[String(asesor.clave).trim()] = asesor;
+      }
+      asesoresById[asesor.id] = asesor;
+    });
+
     const cambios = [];
     const nuevas = [];
     const canceladas = [];
+    const noActualizadas = []; // Pólizas ignoradas por ser renovación
+
+    // Obtener IDs de pólizas que ya tienen recibos de cancelación
+    const polizasConCancelacionRes = await query(
+      `SELECT distinct poliza_id 
+       FROM recibos 
+       WHERE estatus_comision = 'CANCELADO' 
+          OR estatus_pago = 'CANCELADO'
+          OR comision < 0 
+          OR prima_total < 0`
+    );
+    const polizasConCancelacionSet = new Set(
+      polizasConCancelacionRes.rows.map((r) => r.poliza_id)
+    );
 
     // Función para convertir fecha DD/MM/YYYY a YYYY-MM-DD
     function convertirFecha(fechaStr) {
@@ -67,9 +93,12 @@ export async function POST(req) {
         return str;
       }
 
-      // Si está en formato DD/MM/YYYY
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
-        const [dia, mes, anio] = str.split("/");
+      // Si está en formato DD/MM/YYYY o D/M/YYYY o con guiones
+      const match = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+      if (match) {
+        const dia = match[1].padStart(2, '0');
+        const mes = match[2].padStart(2, '0');
+        const anio = match[3];
         return `${anio}-${mes}-${dia}`;
       }
 
@@ -86,6 +115,9 @@ export async function POST(req) {
       return str;
     }
 
+    let rowsProcessed = 0;
+    const polizasEnExcel = new Set(); // Track policies found in Excel
+
     // Analizar cada fila del Excel
     for (let i = 0; i < jsonData.length; i++) {
       const row = jsonData[i];
@@ -99,13 +131,21 @@ export async function POST(req) {
 
       const noPoliza = String(
         row["NO POLIZA"] ||
-          row["No Poliza"] ||
-          row["no_poliza"] ||
-          row["NO_POLIZA"] ||
-          ""
+        row["No Poliza"] ||
+        row["no_poliza"] ||
+        row["NO_POLIZA"] ||
+        row["POLIZA"] ||
+        row["Poliza"] ||
+        row["poliza"] ||
+        row["NUMERO POLIZA"] ||
+        row["Numero Poliza"] ||
+        row["NUMERO DE POLIZA"] ||
+        ""
       ).trim();
 
       if (!noPoliza) continue;
+      rowsProcessed++;
+      polizasEnExcel.add(noPoliza); // Add to set
 
       // Intentar múltiples variaciones de nombres de columnas para estatus
       const estatusRaw =
@@ -120,43 +160,96 @@ export async function POST(req) {
         row["estado"] ||
         "";
 
+
+      // Lógica de búsqueda de Asesor por Clave
+      const rawAsesor = String(
+        row["ASESOR_ID"] ||
+        row["Asesor ID"] ||
+        row["asesor_id"] ||
+        row["ID ASESOR"] ||
+        row["CLAVE_ASESOR"] ||
+        row["Clave Asesor"] ||
+        row["clave_asesor"] ||
+        row["CLAVE ASESOR"] ||
+        row["Clave asesor"] ||
+        row["ASESOR"] ||
+        row["Asesor"] ||
+        row["asesor"] ||
+        ""
+      ).trim();
+
+      let asesorIdFound = null;
+      let asesorNombreFound = "";
+
+      if (rawAsesor) {
+        // 1. Buscar por Clave en el catálogo
+        const asesorPorClave = asesoresByClave[rawAsesor];
+        if (asesorPorClave) {
+          asesorIdFound = asesorPorClave.id;
+          asesorNombreFound = asesorPorClave.nombre;
+        } else {
+          // 2. Fallback: Si no existe la clave, asumir que podría ser un ID directo (legacy)
+          const possibleId = parseInt(rawAsesor);
+          if (!isNaN(possibleId)) {
+            asesorIdFound = possibleId;
+            const asesorPorId = asesoresById[possibleId];
+            asesorNombreFound = asesorPorId ? asesorPorId.nombre : `ID: ${possibleId}`;
+          }
+        }
+      }
+
       const excelData = {
         no_poliza: noPoliza,
         cia: String(row["CIA"] || row["Compañía"] || row["cia"] || "").trim(),
         forma_pago: String(
           row["FORMA PAGO"] ||
-            row["Forma Pago"] ||
-            row["FORMA_PAGO"] ||
-            row["forma_pago"] ||
-            ""
+          row["Forma Pago"] ||
+          row["FORMA_PAGO"] ||
+          row["forma_pago"] ||
+          ""
         ).trim(),
         f_desde: convertirFecha(
           row["F DESDE"] ||
-            row["F. Desde"] ||
-            row["F_DESDE"] ||
-            row["f_desde"] ||
-            ""
+          row["F. Desde"] ||
+          row["F_DESDE"] ||
+          row["f_desde"] ||
+          ""
         ),
         f_hasta: convertirFecha(
           row["F HASTA"] ||
-            row["F. Hasta"] ||
-            row["F_HASTA"] ||
-            row["f_hasta"] ||
-            ""
+          row["F. Hasta"] ||
+          row["F_HASTA"] ||
+          row["f_hasta"] ||
+          row["f_hasta"] ||
+          ""
+        ),
+        f_ingreso: convertirFecha(
+          row["F INGRESO"] ||
+          row["F. Ingreso"] ||
+          row["F_INGRESO"] ||
+          row["f_ingreso"] ||
+          ""
+        ),
+        f_vale_recibido: convertirFecha(
+          row["F VALE RECIBIDO"] ||
+          row["F. Vale Recibido"] ||
+          row["F_VALE_RECIBIDO"] ||
+          row["f_vale_recibido"] ||
+          ""
         ),
         prima_total: parseFloat(
           row["PRIMA TOTAL"] ||
-            row["Prima Total"] ||
-            row["PRIMA_TOTAL"] ||
-            row["prima_total"] ||
-            0
+          row["Prima Total"] ||
+          row["PRIMA_TOTAL"] ||
+          row["prima_total"] ||
+          0
         ),
         prima_neta: parseFloat(
           row["PRIMA NETA"] ||
-            row["Prima Neta"] ||
-            row["PRIMA_NETA"] ||
-            row["prima_neta"] ||
-            0
+          row["Prima Neta"] ||
+          row["PRIMA_NETA"] ||
+          row["prima_neta"] ||
+          0
         ),
         estatus: String(estatusRaw).trim().toUpperCase(),
         folio: String(
@@ -164,31 +257,17 @@ export async function POST(req) {
         ).trim(),
         commission_percentage: parseFloat(
           row["% COMISION"] ||
-            row["% Comisión"] ||
-            row["%_COMISION"] ||
-            row["COMISION"] ||
-            row["comision"] ||
-            0
+          row["% Comisión"] ||
+          row["%_COMISION"] ||
+          row["COMISION"] ||
+          row["comision"] ||
+          0
         ),
         quincena: String(
           row["QUINCENA"] || row["Quincena"] || row["quincena"] || ""
         ).trim(),
-        asesor_id:
-          parseInt(
-            row["ASESOR_ID"] ||
-              row["Asesor ID"] ||
-              row["asesor_id"] ||
-              row["ID ASESOR"] ||
-              row["CLAVE_ASESOR"] ||
-              row["Clave Asesor"] ||
-              row["clave_asesor"] ||
-              row["CLAVE ASESOR"] ||
-              row["Clave asesor"] ||
-              row["ASESOR"] ||
-              row["Asesor"] ||
-              row["asesor"] ||
-              0
-          ) || null,
+        asesor_id: asesorIdFound,
+        asesor_nombre: asesorNombreFound, // Guardamos el nombre para mostrar en UI
       };
 
       // Debug log para las primeras 3 filas
@@ -206,6 +285,16 @@ export async function POST(req) {
         // Póliza nueva
         nuevas.push({ fila: i + 2, ...excelData });
       } else {
+        // Check for RENOVACION in Folio - ONLY for existing policies
+        if (excelData.folio === "RENOVACION" || excelData.folio === "RENOVACIÓN") {
+          noActualizadas.push({
+            fila: i + 2,
+            motivo: "Folio marcado como RENOVACION",
+            ...excelData
+          });
+          continue;
+        }
+
         // Verificar cambios
         const cambiosDetectados = [];
 
@@ -215,6 +304,19 @@ export async function POST(req) {
           .toUpperCase();
         const ciaDB = String(polizaExistente.cia || "").trim();
         const formaPagoDB = String(polizaExistente.forma_pago || "").trim();
+        const fIngresoDB = polizaExistente.f_ingreso
+          ? new Date(polizaExistente.f_ingreso).toISOString().split('T')[0]
+          : "";
+        const fValeRecibidoDB = polizaExistente.f_vale_recibido
+          ? new Date(polizaExistente.f_vale_recibido).toISOString().split('T')[0]
+          : "";
+        const fDesdeDB = polizaExistente.f_desde
+          ? new Date(polizaExistente.f_desde).toISOString().split('T')[0]
+          : "";
+        const fHastaDB = polizaExistente.f_hasta
+          ? new Date(polizaExistente.f_hasta).toISOString().split('T')[0]
+          : "";
+
 
         // Debug log para detectar por qué no se detecta el cambio
         if (i < 3) {
@@ -225,9 +327,8 @@ export async function POST(req) {
           console.log(`  Asesor ID DB: ${polizaExistente.asesor_id}`);
           console.log(`  Asesor ID Excel: ${excelData.asesor_id}`);
           console.log(
-            `  ¿Asesor diferente?: ${
-              parseInt(excelData.asesor_id) !==
-              parseInt(polizaExistente.asesor_id || 0)
+            `  ¿Asesor diferente?: ${parseInt(excelData.asesor_id) !==
+            parseInt(polizaExistente.asesor_id || 0)
             }`
           );
         }
@@ -245,6 +346,38 @@ export async function POST(req) {
             campo: "Forma Pago",
             anterior: formaPagoDB || "N/A",
             nuevo: excelData.forma_pago,
+          });
+        }
+
+        if (excelData.f_ingreso && excelData.f_ingreso !== fIngresoDB) {
+          cambiosDetectados.push({
+            campo: "F. Ingreso",
+            anterior: fIngresoDB || "N/A",
+            nuevo: excelData.f_ingreso,
+          });
+        }
+
+        if (excelData.f_vale_recibido && excelData.f_vale_recibido !== fValeRecibidoDB) {
+          cambiosDetectados.push({
+            campo: "F. Vale Recibido",
+            anterior: fValeRecibidoDB || "N/A",
+            nuevo: excelData.f_vale_recibido,
+          });
+        }
+
+        if (excelData.f_desde && excelData.f_desde !== fDesdeDB) {
+          cambiosDetectados.push({
+            campo: "F. Desde",
+            anterior: fDesdeDB || "N/A",
+            nuevo: excelData.f_desde,
+          });
+        }
+
+        if (excelData.f_hasta && excelData.f_hasta !== fHastaDB) {
+          cambiosDetectados.push({
+            campo: "F. Hasta",
+            anterior: fHastaDB || "N/A",
+            nuevo: excelData.f_hasta,
           });
         }
 
@@ -298,7 +431,7 @@ export async function POST(req) {
           excelData.commission_percentage &&
           Math.abs(
             excelData.commission_percentage -
-              parseFloat(polizaExistente.commission_percentage || 0)
+            parseFloat(polizaExistente.commission_percentage || 0)
           ) > 0.01
         ) {
           cambiosDetectados.push({
@@ -321,16 +454,19 @@ export async function POST(req) {
           });
         }
 
-        // Detectar cambio de asesor
+        // Detectar cambio de asesor comparando IDs, pero mostrando nombres
         if (
           excelData.asesor_id &&
           parseInt(excelData.asesor_id) !==
-            parseInt(polizaExistente.asesor_id || 0)
+          parseInt(polizaExistente.asesor_id || 0)
         ) {
+          const asesorAnteriorObj = asesoresById[polizaExistente.asesor_id];
+          const nombreAnterior = asesorAnteriorObj ? asesorAnteriorObj.nombre : (polizaExistente.asesor_id || "Sin Asesor");
+
           cambiosDetectados.push({
             campo: "Asesor",
-            anterior: String(polizaExistente.asesor_id || "N/A"),
-            nuevo: String(excelData.asesor_id),
+            anterior: String(nombreAnterior),
+            nuevo: String(excelData.asesor_nombre || excelData.asesor_id),
           });
         }
 
@@ -380,7 +516,9 @@ export async function POST(req) {
                   parseFloat(polizaExistente.commission_percentage || 0)) /
                 100,
             };
-            canceladas.push(cambio);
+            if (!polizasConCancelacionSet.has(polizaExistente.id)) {
+              canceladas.push(cambio);
+            }
           }
 
           cambios.push(cambio);
@@ -388,10 +526,32 @@ export async function POST(req) {
       }
     }
 
+
+
+    // Identificar pólizas en BD que no vinieron en el Excel
+    const noEncontradas = [];
+    polizasExistentes.rows.forEach(p => {
+      if (!polizasEnExcel.has(String(p.no_poliza))) {
+        const asesor = asesoresById[p.asesor_id];
+        noEncontradas.push({
+          no_poliza: p.no_poliza,
+          estatus: p.estatus,
+          cia: p.cia,
+          asesor_nombre: asesor ? asesor.nombre : 'Sin Asesor',
+          prima_total: p.prima_total
+        });
+      }
+    });
+
     console.log("\n=== RESUMEN DE ANÁLISIS ===");
     console.log(`Total cambios detectados: ${cambios.length}`);
     console.log(`Total nuevas: ${nuevas.length}`);
+    console.log(`Total no encontradas en Excel: ${noEncontradas.length}`);
+    console.log(`Total cambios detectados: ${cambios.length}`);
+    console.log(`Total nuevas: ${nuevas.length}`);
+    console.log(`Total no encontradas en Excel: ${noEncontradas.length}`);
     console.log(`Total canceladas: ${canceladas.length}`);
+    console.log(`Total no actualizadas (Renovación): ${noActualizadas.length}`);
     if (cambios.length > 0) {
       console.log("\nPrimeros 3 cambios:");
       cambios.slice(0, 3).forEach((c) => {
@@ -408,9 +568,15 @@ export async function POST(req) {
       cambios,
       nuevas,
       canceladas,
+      noEncontradas,
+      noActualizadas,
       totalCambios: cambios.length,
       totalNuevas: nuevas.length,
       totalCanceladas: canceladas.length,
+      totalNoEncontradas: noEncontradas.length,
+      totalNoActualizadas: noActualizadas.length,
+      rowsProcessed,
+      detectedColumns: jsonData.length > 0 ? Object.keys(jsonData[0]) : [],
     });
   } catch (error) {
     console.error("Error previewing changes:", error);

@@ -11,7 +11,7 @@ import {
 
 const columnHelper = createColumnHelper();
 
-export default function PolizasTable({ data = [] }) {
+export default function PolizasTable({ data = [], pendingData = null }) {
   const [mounted, setMounted] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -19,6 +19,58 @@ export default function PolizasTable({ data = [] }) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // 1. Merge "New" policies into data for constant display
+  const tableData = useMemo(() => {
+    if (!pendingData?.nuevas) return data;
+    // Map 'nuevas' to match schema roughly
+    const newRows = pendingData.nuevas.map((n, idx) => ({
+      ...n,
+      id: `NEW-${idx}`,
+      isNew: true,
+      asesor_nombre: n.asesor_id ? `ID: ${n.asesor_id}` : "Sin Asesor", // Placeholder
+      created_at: new Date().toISOString(),
+    }));
+    return [...newRows, ...data];
+  }, [data, pendingData]);
+
+  // 2. Create Lookup Map for Changes // Key: no_poliza
+  const changesMap = useMemo(() => {
+    if (!pendingData?.cambios) return {};
+    const map = {};
+    pendingData.cambios.forEach((c) => {
+      map[c.no_poliza] = c.cambios; // Array of { campo, anterior, nuevo }
+    });
+    return map;
+  }, [pendingData]);
+
+  // Helper to find change for a specific field
+  const getChange = (no_poliza, fieldName) => {
+    const changes = changesMap[no_poliza];
+    if (!changes) return null;
+    return changes.find(c => c.campo === fieldName);
+  };
+
+  // Helper renderer for changed cells
+  const renderCellWithChange = (info, fieldName, formatFn = (v) => v) => {
+    const originalValue = info.getValue();
+    const poliza = info.row.original;
+
+    if (poliza.isNew) {
+      return <span className="text-green-600 font-bold bg-green-50 px-1 rounded">{formatFn(originalValue)} (NUEVA)</span>;
+    }
+
+    const change = getChange(poliza.no_poliza, fieldName);
+    if (change) {
+      return (
+        <div className="flex flex-col text-xs">
+          <span className="line-through text-red-400">{formatFn(change.anterior)}</span>
+          <span className="font-bold text-green-600">=&gt; {formatFn(change.nuevo)}</span>
+        </div>
+      );
+    }
+    return formatFn(originalValue) || "-";
+  };
 
   const columns = useMemo(
     () => [
@@ -32,7 +84,22 @@ export default function PolizasTable({ data = [] }) {
       columnHelper.accessor("estatus", {
         header: "Estatus",
         cell: (info) => {
-          const estatus = info.getValue();
+          const originalValue = info.getValue();
+          const poliza = info.row.original;
+          const change = getChange(poliza.no_poliza, "Estatus");
+
+          if (poliza.isNew) return <span className="text-green-600 font-bold">NUEVA - {originalValue}</span>;
+
+          if (change) {
+            return (
+              <div className="flex flex-col text-xs">
+                <span className="line-through text-red-400">{change.anterior}</span>
+                <span className="font-bold text-green-600">=&gt; {change.nuevo}</span>
+              </div>
+            );
+          }
+
+          const estatus = originalValue;
           const tieneRecibos = info.row.original.tiene_recibos;
           let badgeColor =
             "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
@@ -66,21 +133,15 @@ export default function PolizasTable({ data = [] }) {
       }),
       columnHelper.accessor("quincena", {
         header: "Quincena",
-        cell: (info) => (
-          <span className="text-sm">{info.getValue() || "-"}</span>
-        ),
+        cell: (info) => renderCellWithChange(info, "Quincena"),
         size: 100,
       }),
       columnHelper.accessor("f_ingreso", {
         header: "F. Ingreso",
-        cell: (info) => {
-          const fecha = info.getValue();
-          return (
-            <span className="text-sm text-muted">
-              {fecha ? new Date(fecha).toLocaleDateString("es-MX") : "-"}
-            </span>
-          );
-        },
+        cell: (info) =>
+          renderCellWithChange(info, "F. Ingreso", (v) =>
+            v ? new Date(v).toLocaleDateString("es-MX") : "-"
+          ),
         size: 100,
       }),
       columnHelper.accessor("no_poliza", {
@@ -89,80 +150,57 @@ export default function PolizasTable({ data = [] }) {
           <span className="text-sm font-semibold text-primary">
             {info.getValue() || "-"}
           </span>
+          // Note: Policy number usually doesn't change, but if it did...
         ),
         size: 150,
       }),
       columnHelper.accessor("folio", {
         header: "Folio",
-        cell: (info) => (
-          <span className="text-sm">{info.getValue() || "-"}</span>
-        ),
+        cell: (info) => renderCellWithChange(info, "Folio"),
         size: 120,
       }),
       columnHelper.accessor("asesor_nombre", {
         header: "Asesor",
-        cell: (info) => (
-          <span className="text-sm">{info.getValue() || "Sin Asesor"}</span>
-        ),
+        cell: (info) => renderCellWithChange(info, "Asesor"),
         size: 180,
       }),
       columnHelper.accessor("cia", {
         header: "Compañía",
-        cell: (info) => (
-          <span className="text-sm">{info.getValue() || "-"}</span>
-        ),
+        cell: (info) => renderCellWithChange(info, "CIA"),
         size: 150,
       }),
       columnHelper.accessor("f_desde", {
         header: "Desde",
-        cell: (info) => {
-          const fecha = info.getValue();
-          return (
-            <span className="text-sm text-muted">
-              {fecha ? new Date(fecha).toLocaleDateString("es-MX") : "-"}
-            </span>
-          );
-        },
+        cell: (info) =>
+          renderCellWithChange(info, "F. Desde", (v) =>
+            v ? new Date(v).toLocaleDateString("es-MX") : "-"
+          ),
         size: 100,
       }),
       columnHelper.accessor("f_hasta", {
         header: "Hasta",
-        cell: (info) => {
-          const fecha = info.getValue();
-          return (
-            <span className="text-sm text-muted">
-              {fecha ? new Date(fecha).toLocaleDateString("es-MX") : "-"}
-            </span>
-          );
-        },
+        cell: (info) =>
+          renderCellWithChange(info, "F. Hasta", (v) =>
+            v ? new Date(v).toLocaleDateString("es-MX") : "-"
+          ),
         size: 100,
       }),
       columnHelper.accessor("prima_total", {
         header: "Prima Total",
-        cell: (info) => (
-          <span className="text-sm font-medium">
-            {info.getValue() ? `$${info.getValue()}` : "-"}
-          </span>
-        ),
+        cell: (info) => renderCellWithChange(info, "Prima Total", (v) => v ? `$${v}` : "-"),
         size: 120,
       }),
       columnHelper.accessor("forma_pago", {
         header: "Forma Pago",
-        cell: (info) => (
-          <span className="text-sm">{info.getValue() || "-"}</span>
-        ),
+        cell: (info) => renderCellWithChange(info, "Forma Pago"),
         size: 120,
       }),
       columnHelper.accessor("f_vale_recibido", {
         header: "F. Vale Recibido",
-        cell: (info) => {
-          const fecha = info.getValue();
-          return (
-            <span className="text-sm text-muted">
-              {fecha ? new Date(fecha).toLocaleDateString("es-MX") : "-"}
-            </span>
-          );
-        },
+        cell: (info) =>
+          renderCellWithChange(info, "F. Vale Recibido", (v) =>
+            v ? new Date(v).toLocaleDateString("es-MX") : "-"
+          ),
         size: 120,
       }),
       columnHelper.accessor("created_at", {
@@ -178,11 +216,11 @@ export default function PolizasTable({ data = [] }) {
         size: 140,
       }),
     ],
-    []
+    [pendingData, changesMap]
   );
 
   const table = useReactTable({
-    data: data || [],
+    data: tableData, // Use the merged data
     columns,
     state: {
       sorting,
@@ -201,7 +239,7 @@ export default function PolizasTable({ data = [] }) {
     );
   }
 
-  if (!data || data.length === 0) {
+  if (!tableData || tableData.length === 0) {
     return (
       <div className="w-full p-8 text-center">
         <p className="text-muted text-base">
@@ -230,15 +268,14 @@ export default function PolizasTable({ data = [] }) {
                 <div className="text-right">
                   <p className="text-xs text-muted mb-1">Estatus</p>
                   <span
-                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                      poliza.estatus === "VIGENTE"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                        : poliza.estatus === "CANCELADA"
+                    className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${poliza.estatus === "VIGENTE"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                      : poliza.estatus === "CANCELADA"
                         ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
                         : poliza.estatus === "PENDIENTE"
-                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                        : "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                    }`}
+                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                          : "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                      }`}
                   >
                     {poliza.estatus || "Sin Estatus"}
                   </span>
@@ -311,8 +348,8 @@ export default function PolizasTable({ data = [] }) {
                   <p className="text-muted">
                     {poliza.f_vale_recibido
                       ? new Date(poliza.f_vale_recibido).toLocaleDateString(
-                          "es-MX"
-                        )
+                        "es-MX"
+                      )
                       : "-"}
                   </p>
                 </div>

@@ -9,6 +9,7 @@ import {
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
+import PaymentReminderModal from "./PaymentReminderModal";
 
 const columnHelper = createColumnHelper();
 
@@ -47,6 +48,14 @@ export default function RecibosTable({ data = [] }) {
   });
   const [loading, setLoading] = useState(false);
 
+  // Reminder Modal State
+  const [showReminderModal, setShowReminderModal] = useState(false);
+  const [reminderData, setReminderData] = useState({
+    policyData: null,
+    daysData: 0,
+    type: 'overdue'
+  });
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -61,11 +70,24 @@ export default function RecibosTable({ data = [] }) {
   }, []);
 
   // Función para calcular días de vencimiento
-  const calculateDiasVencimiento = (f_hasta) => {
-    if (!f_hasta) return 0;
+  const calculateDiasVencimiento = (row) => {
+    // Buscar siguiente recibo no pagado
+    const recibos = row.recibos || [];
+    const sortedRecibos = [...recibos].sort((a, b) => (a.no_recibo || 0) - (b.no_recibo || 0));
+    const nextUnpaid = sortedRecibos.find(r => r.estatus_pago !== "PAGADO" && r.estatus_pago !== "CANCELADO");
+
+    // Si hay recibo pendiente, usar su f_hasta. Si no, usar f_hasta de la póliza (fin vigencia)
+    const targetDateStr = nextUnpaid ? nextUnpaid.f_hasta : row.f_hasta;
+
+    if (!targetDateStr) return null;
+
     const hoy = new Date();
-    const vencimiento = new Date(f_hasta);
-    const diffTime = vencimiento - hoy;
+
+    const targetDate = new Date(targetDateStr);
+    const target = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const current = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+
+    const diffTime = target - current;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
   };
@@ -296,6 +318,17 @@ export default function RecibosTable({ data = [] }) {
     }
   };
 
+  const handleDaysClick = (e, row, days) => {
+    e.stopPropagation();
+    if (days === null) return;
+    setReminderData({
+      policyData: row,
+      daysData: days,
+      type: days < 0 ? 'overdue' : 'remaining'
+    });
+    setShowReminderModal(true);
+  };
+
   const columns = useMemo(
     () => [
       columnHelper.accessor("no_poliza", {
@@ -347,15 +380,16 @@ export default function RecibosTable({ data = [] }) {
       columnHelper.accessor("f_hasta", {
         header: "Días Vencimiento",
         cell: (info) => {
-          const dias = calculateDiasVencimiento(info.getValue());
+          const dias = calculateDiasVencimiento(info.row.original);
+          if (dias === null) return <span className="text-sm text-muted">-</span>;
           const isVencido = dias < 0;
           return (
             <span
-              className={`text-sm font-medium ${
-                isVencido
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-green-600 dark:text-green-400"
-              }`}
+              onClick={(e) => handleDaysClick(e, info.row.original, dias)}
+              className={`text-sm font-medium cursor-pointer hover:underline ${isVencido
+                ? "text-red-600 dark:text-red-400"
+                : "text-green-600 dark:text-green-400"
+                }`}
             >
               {dias} días
             </span>
@@ -417,8 +451,7 @@ export default function RecibosTable({ data = [] }) {
                   );
 
                   const tooltipText = [
-                    `Recibo ${reciboNum} (${idx + 1}/${
-                      recibosConNumero.length
+                    `Recibo ${reciboNum} (${idx + 1}/${recibosConNumero.length
                     })`,
                     `\nPago: ${recibo.estatus_pago}`,
                     recibo.f_pago
@@ -554,7 +587,7 @@ export default function RecibosTable({ data = [] }) {
         {table.getRowModel().rows.map((row) => {
           const poliza = row.original;
           const recibos = poliza.recibos || [];
-          const diasVencimiento = calculateDiasVencimiento(poliza.f_hasta);
+          const diasVencimiento = calculateDiasVencimiento(poliza);
 
           return (
             <div
@@ -597,15 +630,19 @@ export default function RecibosTable({ data = [] }) {
                 </div>
                 <div>
                   <p className="text-xs text-muted">Días Vencimiento</p>
-                  <p
-                    className={`font-medium ${
-                      diasVencimiento < 0
+                  {diasVencimiento !== null ? (
+                    <p
+                      onClick={(e) => handleDaysClick(e, poliza, diasVencimiento)}
+                      className={`font-medium cursor-pointer hover:underline ${diasVencimiento < 0
                         ? "text-red-600 dark:text-red-400"
                         : "text-green-600 dark:text-green-400"
-                    }`}
-                  >
-                    {diasVencimiento} días
-                  </p>
+                        }`}
+                    >
+                      {diasVencimiento} días
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted">-</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-xs text-muted">Compañía</p>
@@ -760,7 +797,7 @@ export default function RecibosTable({ data = [] }) {
           a{" "}
           {Math.min(
             (table.getState().pagination.pageIndex + 1) *
-              table.getState().pagination.pageSize,
+            table.getState().pagination.pageSize,
             data.length
           )}{" "}
           de {data.length} resultados
@@ -1241,6 +1278,15 @@ export default function RecibosTable({ data = [] }) {
             </div>
           </div>
         </div>
+      )}
+      {showReminderModal && (
+        <PaymentReminderModal
+          isOpen={showReminderModal}
+          onClose={() => setShowReminderModal(false)}
+          policyData={reminderData.policyData}
+          daysData={reminderData.daysData}
+          type={reminderData.type}
+        />
       )}
     </div>
   );
