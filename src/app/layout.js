@@ -10,6 +10,7 @@ import {
   ChartBarIcon,
   CurrencyDollarIcon,
   ArchiveBoxIcon,
+  UserIcon,
 } from "@heroicons/react/20/solid";
 import Logo from "../components/ui/Logo";
 import Provider from "../components/SessionProvider";
@@ -106,6 +107,13 @@ export default async function RootLayout({ children }) {
                         />
                         Renovaciones
                       </Link>
+                      <Link href="/asesores" className="btn-secondary gap-2">
+                        <UserIcon
+                          className="h-4 w-4 text-foreground"
+                          aria-hidden="true"
+                        />
+                        Asesores
+                      </Link>
                       {isAdmin(session) ? (
                         <Link href="/admin" className="btn-secondary gap-2">
                           <Cog6ToothIcon
@@ -125,7 +133,7 @@ export default async function RootLayout({ children }) {
                         />
                         Menú
                       </summary>
-                      <div className="absolute right-0 mt-2 w-40 rounded-lg border border-border bg-background shadow-md">
+                      <div className="absolute z-50 right-0 mt-2 w-40 rounded-lg border border-border bg-background shadow-md">
                         <div className="flex flex-col p-2">
                           <Link
                             href="/bitacora"
@@ -156,6 +164,16 @@ export default async function RootLayout({ children }) {
                               aria-hidden="true"
                             />
                             Renovaciones
+                          </Link>
+                          <Link
+                            href="/asesores"
+                            className="btn-secondary w-full mt-2 gap-2"
+                          >
+                            <UserIcon
+                              className="h-4 w-4 text-foreground"
+                              aria-hidden="true"
+                            />
+                            Asesores
                           </Link>
                           {isAdmin(session) ? (
                             <Link
