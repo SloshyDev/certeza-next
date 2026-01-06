@@ -58,13 +58,13 @@ export default function UpdateRenovaciones() {
 
         // Búsqueda flexible de columnas
         const keys = Object.keys(row);
-        // Busca columna que contenga "POLIZA" (case insensitive)
-        const polizaKey = keys.find((k) => k.toUpperCase().includes("POLIZA"));
-        // Busca columna "DOCUMENTOS FALTANTES"
-        const statusKey = keys.find((k) =>
-          k.toUpperCase().includes("DOCUMENTOS FALTANTES") ||
-          k.toUpperCase().includes("DOCS FALTANTES")
+        // Busca columna "no_poliza" o similar
+        const polizaKey = keys.find((k) =>
+          k.toLowerCase().replace(/[^a-z0-9]/g, "") === "nopoliza" ||
+          k.toLowerCase().includes("poliza")
         );
+        // Busca columna "estatus"
+        const statusKey = keys.find((k) => k.toLowerCase() === "estatus");
 
         if (!polizaKey) continue;
 
@@ -187,22 +187,18 @@ export default function UpdateRenovaciones() {
                       <ul className="list-disc list-inside space-y-1">
                         <li>
                           Sube un Excel con las columnas:{" "}
-                          <strong>NO DE POLIZA</strong> y{" "}
-                          <strong>DOCUMENTOS FALTANTES</strong>.
+                          <strong>no_poliza</strong> y{" "}
+                          <strong>estatus</strong>.
                         </li>
                         <li>
-                          El contenido de <strong>DOCUMENTOS FALTANTES</strong> define la actualización.
+                          El contenido de <strong>estatus</strong> define la actualización.
                         </li>
                         <li>
-                          Si dice <strong>"FOLIO COMPLETO"</strong> o <strong>"RECHAZO PARITARIA"</strong> &rarr;
+                          Si dice <strong>"FOLIO COMPLETO"</strong> &rarr;
                           Se guarda como <strong>COLOCADA</strong>.
                         </li>
                         <li>
-                          Si dice <strong>"FALTAN DOCUMENTOS"</strong> &rarr;
-                          Se guarda como <strong>PENDIENTE</strong>.
-                        </li>
-                        <li>
-                          Cualquier otro valor se guarda tal cual como el estatus (ej. "CANCELADA", etc).
+                          VALORES VÁLIDOS: <strong>PENDIENTE, COLOCADA, REEXPEDIDA, CANCELADA</strong>.
                         </li>
                       </ul>
                     </div>

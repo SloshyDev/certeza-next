@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { query, isDbConfigured } from "@/lib/db";
+import { query } from "@/lib/extractor-db";
+import { isExtractorDbConfigured } from "@/lib/db";
 
 // Función para convertir fecha de DD/MM/YYYY a YYYY-MM-DD
 function convertirFecha(fecha) {
@@ -22,12 +23,12 @@ function convertirFecha(fecha) {
 
 export async function POST(request) {
   try {
-    // Verificar que la base de datos esté configurada
-    if (!isDbConfigured()) {
+    // Verificar que la base de datos del extractor esté configurada
+    if (!isExtractorDbConfigured()) {
       return NextResponse.json(
         {
           success: false,
-          error: "Base de datos no configurada",
+          error: "Base de datos del extractor no configurada",
         },
         { status: 500 }
       );

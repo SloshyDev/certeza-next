@@ -9,15 +9,28 @@ export function isDbConfigured() {
   );
 }
 
-export function getPool() {
-  if (!isDbConfigured()) {
-    throw new Error("DB_NOT_CONFIGURED");
-  }
-  return new Pool({ connectionString: process.env.DATABASE_URL });
+export function isExtractorDbConfigured() {
+  const url = process.env.DATABASE_URL_EXTRACTOR;
+  return (
+    typeof url === "string" &&
+    /^postgres(ql)?:\/\//.test(url) &&
+    !url.includes("user:password@host:port")
+  );
 }
 
-export async function query(text, params) {
-  const pool = getPool();
+export function getPool(useExtractorDb = false) {
+  const dbUrl = useExtractorDb
+    ? process.env.DATABASE_URL_EXTRACTOR
+    : process.env.DATABASE_URL;
+
+  if (!dbUrl || !/^postgres(ql)?:\/\//.test(dbUrl)) {
+    throw new Error("DB_NOT_CONFIGURED");
+  }
+  return new Pool({ connectionString: dbUrl });
+}
+
+export async function query(text, params, useExtractorDb = false) {
+  const pool = getPool(useExtractorDb);
   const client = await pool.connect();
   try {
     const res = await client.query(text, params);

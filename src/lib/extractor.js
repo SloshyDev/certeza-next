@@ -1,17 +1,20 @@
-import { query, isDbConfigured } from "./db.js";
+import { query } from "./extractor-db.js";
+import { isExtractorDbConfigured } from "./db.js";
 
 /**
  * Obtener lista de asesores activos
  */
 export async function getAsesores() {
-  if (!isDbConfigured()) return [];
+  if (!isExtractorDbConfigured()) return [];
 
   try {
     const res = await query(
       `SELECT id_asesor as id, nombre, clave_asesor as clave 
        FROM asesores 
        WHERE activo = true 
-       ORDER BY nombre ASC`
+       ORDER BY nombre ASC`,
+      [],
+      true // Usar DB del extractor
     );
     return res.rows;
   } catch (error) {
@@ -24,14 +27,16 @@ export async function getAsesores() {
  * Obtener lista de gerentes activos
  */
 export async function getGerentes() {
-  if (!isDbConfigured()) return [];
+  if (!isExtractorDbConfigured()) return [];
 
   try {
     const res = await query(
       `SELECT id_gerente as id, nombre
        FROM gerentes 
        WHERE activo = true 
-       ORDER BY nombre ASC`
+       ORDER BY nombre ASC`,
+      [],
+      true // Usar DB del extractor
     );
     return res.rows;
   } catch (error) {
