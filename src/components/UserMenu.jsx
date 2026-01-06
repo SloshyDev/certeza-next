@@ -1,13 +1,18 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { UserCircleIcon, ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
+import { UserCircleIcon, ArrowRightStartOnRectangleIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
+import BuzonesConfigModal from "./BuzonesConfigModal";
 
 export default function UserMenu({ user, onSignOut }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [dbUser, setDbUser] = useState(null); // { found: bool, user: obj }
+    const [isBuzonesModalOpen, setIsBuzonesModalOpen] = useState(false);
     const menuRef = useRef(null);
+
+    // Permission check
+    const canConfigureBuzones = user?.roles?.some(r => ["admin", "emisor", "coordinador", "supervisor_emi"].includes(r));
 
     // Close on click outside
     useEffect(() => {
@@ -112,6 +117,22 @@ export default function UserMenu({ user, onSignOut }) {
                         ''
                     )}
 
+                    {canConfigureBuzones && (
+                        <>
+                            <hr className="border-border my-2" />
+                            <button
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    setIsBuzonesModalOpen(true);
+                                }}
+                                className="w-full text-left flex items-center gap-2 px-2 py-2 text-sm text-foreground hover:bg-muted rounded-md transition-colors"
+                            >
+                                <EnvelopeIcon className="h-4 w-4" />
+                                Configurar Buzones
+                            </button>
+                        </>
+                    )}
+
                     <hr className="border-border my-2" />
 
                     <button
@@ -123,6 +144,11 @@ export default function UserMenu({ user, onSignOut }) {
                     </button>
                 </div>
             )}
+
+            <BuzonesConfigModal
+                isOpen={isBuzonesModalOpen}
+                onClose={() => setIsBuzonesModalOpen(false)}
+            />
         </div>
     );
 }
