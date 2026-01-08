@@ -74,6 +74,12 @@ export async function POST(request) {
       documentos_faltantes,
       completo,
 
+      // Datos de vales
+      numero_vale,
+      fecha_ingreso_vales,
+      quincena,
+      estado_vale,
+
       // Selección del usuario
       asesor_id,
       gerencia,
@@ -218,6 +224,27 @@ export async function POST(request) {
     }
 
     // ============================================================================
+    // PASO 3.5: Actualizar gerencia del asesor si fue seleccionada
+    // ============================================================================
+    if (asesor_id && gerencia) {
+      // Buscar el id_gerente por nombre de gerencia
+      const gerenteResult = await query(
+        `SELECT id_gerente FROM gerentes WHERE nombre ILIKE $1 LIMIT 1`,
+        [gerencia]
+      );
+
+      if (gerenteResult.rows.length > 0) {
+        const id_gerente = gerenteResult.rows[0].id_gerente;
+
+        // Actualizar el asesor con la gerencia
+        await query(
+          `UPDATE asesores SET id_gerente = $1 WHERE id_asesor = $2`,
+          [id_gerente, parseInt(asesor_id)]
+        );
+      }
+    }
+
+    // ============================================================================
     // PASO 4: Insertar PÓLIZA
     // ============================================================================
     const polizaResult = await query(
@@ -276,7 +303,26 @@ export async function POST(request) {
     );
 
     // ============================================================================
-    // PASO 6: Registrar en audit_log
+    // PASO 6: Insertar VALES (si hay datos de vale)
+    // ============================================================================
+    if (numero_vale || quincena || fecha_ingreso_vales || estado_vale) {
+      await query(
+        `INSERT INTO vales (
+          id_poliza, numero_vale, fecha_ingreso_vales, quincena, estado_vale
+        )
+        VALUES ($1, $2, $3, $4, $5)`,
+        [
+          id_poliza,
+          numero_vale || null,
+          convertirFecha(fecha_ingreso_vales),
+          quincena || null,
+          estado_vale || null,
+        ]
+      );
+    }
+
+    // ============================================================================
+    // PASO 7: Registrar en audit_log
     // ============================================================================
     await query(
       `INSERT INTO audit_log (tabla, id_registro, usuario, accion, datos_nuevos, fecha)

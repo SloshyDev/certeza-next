@@ -92,27 +92,85 @@ export default function UserMenu({ user, onSignOut }) {
                     {loading ? (
                         <p className="text-xs py-2 opacity-50">Cargando estado...</p>
                     ) : dbUser?.found ? (
-                        <div className="py-2 flex items-center justify-between">
-                            <div className="text-sm">
-                                <p className="font-medium text-foreground">Asignación</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {dbUser.user.status ? "Activo" : "Inactivo"}
-                                </p>
+                        <>
+                            <div className="py-2 flex items-center justify-between">
+                                <div className="text-sm">
+                                    <p className="font-medium text-foreground">Asignación</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {dbUser.user.status ? "Activo" : "Inactivo"}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={toggleStatus}
+                                    className={`${dbUser.user.status ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700"
+                                        } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2`}
+                                    role="switch"
+                                    aria-checked={dbUser.user.status}
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        className={`${dbUser.user.status ? "translate-x-5" : "translate-x-0"
+                                            } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                                    />
+                                </button>
                             </div>
-                            <button
-                                onClick={toggleStatus}
-                                className={`${dbUser.user.status ? "bg-green-600" : "bg-gray-200 dark:bg-gray-700"
-                                    } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2`}
-                                role="switch"
-                                aria-checked={dbUser.user.status}
-                            >
-                                <span
-                                    aria-hidden="true"
-                                    className={`${dbUser.user.status ? "translate-x-5" : "translate-x-0"
-                                        } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                                />
-                            </button>
-                        </div>
+
+                            <hr className="border-border my-2" />
+
+                            <div className="py-2">
+                                <p className="text-sm font-medium text-foreground mb-2">Recibir asignaciones de:</p>
+                                {["cotizacion@certezacovems.com.mx", "emision@certezacovems.com.mx"].map((email) => {
+                                    const isChecked = dbUser.user.buzones_permitidos?.includes(email);
+                                    return (
+                                        <div key={email} className="flex items-center space-x-2 mb-2">
+                                            <input
+                                                type="checkbox"
+                                                id={email}
+                                                checked={!!isChecked}
+                                                onChange={async (e) => {
+                                                    const checked = e.target.checked;
+                                                    const currentBuzones = dbUser.user.buzones_permitidos || [];
+                                                    let newBuzones;
+                                                    if (checked) {
+                                                        newBuzones = [...currentBuzones, email];
+                                                    } else {
+                                                        newBuzones = currentBuzones.filter(b => b !== email);
+                                                    }
+
+                                                    // Optimistic update
+                                                    setDbUser(prev => ({
+                                                        ...prev,
+                                                        user: { ...prev.user, buzones_permitidos: newBuzones }
+                                                    }));
+
+                                                    try {
+                                                        const res = await fetch("/api/user/status", {
+                                                            method: "PATCH",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ buzones: newBuzones }),
+                                                        });
+                                                        if (!res.ok) throw new Error("Failed to update buzones");
+                                                        const json = await res.json();
+                                                        setDbUser({ found: true, user: json.user });
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                        // Revert
+                                                        setDbUser(prev => ({
+                                                            ...prev,
+                                                            user: { ...prev.user, buzones_permitidos: currentBuzones }
+                                                        }));
+                                                    }
+                                                }}
+                                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <label htmlFor={email} className="text-xs text-foreground cursor-pointer select-none">
+                                                {email}
+                                            </label>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
                     ) : (
                         ''
                     )}

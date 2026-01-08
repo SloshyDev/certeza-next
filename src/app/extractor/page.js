@@ -16,6 +16,7 @@ export default function ExtractorPage() {
   const [gerentes, setGerentes] = useState([]);
   const [selectedAsesor, setSelectedAsesor] = useState("");
   const [selectedGerencia, setSelectedGerencia] = useState("");
+  const [quincenaYear, setQuincenaYear] = useState("2026");
 
   // Cargar plantillas, asesores y gerentes al montar el componente
   useEffect(() => {
@@ -105,11 +106,20 @@ export default function ExtractorPage() {
 
       // Inicializar formData con los valores extraídos
       const initialFormData = {};
+      const camposFechaList = [
+        "fecha_desde",
+        "fecha_hasta",
+        "fecha_emision",
+        "fecha_ingreso_digital",
+      ];
       Object.entries(data.data).forEach(([field, fieldData]) => {
         if (fieldData.mapped && !fieldData.value.startsWith("⚠️")) {
           // Parsear primas a número si son campos de prima
           if (field === "prima_neta" || field === "prima_total") {
             initialFormData[field] = parsePrima(fieldData.value);
+          } else if (camposFechaList.includes(field)) {
+            // Convertir fechas a formato YYYY-MM-DD para input date
+            initialFormData[field] = convertirFechaParaInput(fieldData.value);
           } else {
             initialFormData[field] = fieldData.value;
           }
@@ -147,6 +157,31 @@ export default function ExtractorPage() {
     return isNaN(numero) ? value : numero.toString();
   };
 
+  // Función para convertir fecha de DD/MM/YYYY a YYYY-MM-DD (formato input date)
+  const convertirFechaParaInput = (fecha) => {
+    if (!fecha || fecha.startsWith("⚠️")) return "";
+    // Si ya está en formato ISO (YYYY-MM-DD), retornarla
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+      return fecha;
+    }
+    // Convertir de DD/MM/YYYY a YYYY-MM-DD
+    const partes = fecha.split("/");
+    if (partes.length === 3) {
+      const [dia, mes, año] = partes;
+      return `${año}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
+    }
+    return "";
+  };
+
+  // Lista de campos de fecha
+  const camposFecha = [
+    "fecha_desde",
+    "fecha_hasta",
+    "fecha_emision",
+    "fecha_ingreso_digital",
+    "fecha_ingreso_fisico",
+  ];
+
   const handleSave = async () => {
     // Validación básica
     if (!selectedAsesor) {
@@ -169,8 +204,11 @@ export default function ExtractorPage() {
       // Preparar datos para enviar
       const datosCompletos = {
         ...formData,
+        // Combinar quincena con año si existe
+        quincena: formData.quincena ? `${formData.quincena} ${quincenaYear}` : "",
         asesor_id: selectedAsesor,
         gerencia: selectedGerencia,
+        aseguradora: selectedTemplate.split(" ")[0], // Primera palabra de la plantilla
       };
 
       // Enviar a la API
@@ -214,6 +252,7 @@ export default function ExtractorPage() {
     setSelectedTemplate("");
     setSelectedAsesor("");
     setSelectedGerencia("");
+    setQuincenaYear("2026");
     setError("");
   };
 
@@ -271,12 +310,14 @@ export default function ExtractorPage() {
       "prima_neta",
       "prima_total",
       "forma_pago",
+      "pago_mixto",
     ],
     "Información del Asegurado": [
       "nombre_asegurado",
       "rfc",
       "direccion",
       "telefono",
+      "ubicacion",
       "numero_empleado",
       "tipo_trabajador",
     ],
@@ -289,9 +330,8 @@ export default function ExtractorPage() {
       "tipo_vehiculo",
     ],
     "Control y Administración": [
-      "ubicacion",
-      "pago_mixto",
-      "numero_vale",
+      "fecha_ingreso_digital",
+      "fecha_ingreso_fisico",
       "quincena",
       "documentos_faltantes",
     ],
@@ -454,95 +494,302 @@ export default function ExtractorPage() {
               </div>
             </div>
 
-            {/* Form */}
+            {/* Sección Control y Administración - Debajo de Asesor y Gerencia */}
+            <div className="bg-white rounded-lg shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">
+                📋 Control y Administración
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {categories["Control y Administración"].map((field) => (
+                  <div key={field}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {formatFieldName(field)}
+                    </label>
+                    {field === "quincena" ? (
+                      <div className="flex gap-2">
+                        <select
+                          value={formData[field] || ""}
+                          onChange={(e) =>
+                            handleInputChange(field, e.target.value)
+                          }
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        >
+                          <option value="">Selecciona una quincena...</option>
+                          <option value="1RA ENERO">1RA ENERO</option>
+                          <option value="2DA ENERO">2DA ENERO</option>
+                          <option value="1RA FEBRERO">1RA FEBRERO</option>
+                          <option value="2DA FEBRERO">2DA FEBRERO</option>
+                          <option value="1RA MARZO">1RA MARZO</option>
+                          <option value="2DA MARZO">2DA MARZO</option>
+                          <option value="1RA ABRIL">1RA ABRIL</option>
+                          <option value="2DA ABRIL">2DA ABRIL</option>
+                          <option value="1RA MAYO">1RA MAYO</option>
+                          <option value="2DA MAYO">2DA MAYO</option>
+                          <option value="1RA JUNIO">1RA JUNIO</option>
+                          <option value="2DA JUNIO">2DA JUNIO</option>
+                          <option value="1RA JULIO">1RA JULIO</option>
+                          <option value="2DA JULIO">2DA JULIO</option>
+                          <option value="1RA AGOSTO">1RA AGOSTO</option>
+                          <option value="2DA AGOSTO">2DA AGOSTO</option>
+                          <option value="1RA SEPTIEMBRE">1RA SEPTIEMBRE</option>
+                          <option value="2DA SEPTIEMBRE">2DA SEPTIEMBRE</option>
+                          <option value="1RA OCTUBRE">1RA OCTUBRE</option>
+                          <option value="2DA OCTUBRE">2DA OCTUBRE</option>
+                          <option value="1RA NOVIEMBRE">1RA NOVIEMBRE</option>
+                          <option value="2DA NOVIEMBRE">2DA NOVIEMBRE</option>
+                          <option value="1RA DICIEMBRE">1RA DICIEMBRE</option>
+                          <option value="2DA DICIEMBRE">2DA DICIEMBRE</option>
+                        </select>
+                        <input
+                          type="number"
+                          value={quincenaYear}
+                          onChange={(e) => setQuincenaYear(e.target.value)}
+                          className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                          placeholder="Año"
+                          min="2020"
+                          max="2099"
+                        />
+                      </div>
+                    ) : camposFecha.includes(field) ? (
+                      <input
+                        type="date"
+                        value={formData[field] || ""}
+                        onChange={(e) =>
+                          handleInputChange(field, e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={formData[field] || ""}
+                        onChange={(e) =>
+                          handleInputChange(field, e.target.value)
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        placeholder={
+                          extractedData.data[field]?.mapped
+                            ? ""
+                            : "No mapeado en plantilla"
+                        }
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Form - Resto de las secciones */}
             <div className="bg-white rounded-lg shadow-lg p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">
                 ✏️ Datos Extraídos (Editables)
               </h2>
 
               <div className="space-y-8">
-                {Object.entries(categories).map(([categoryName, fields]) => (
-                  <div
-                    key={categoryName}
-                    className="border-l-4 border-blue-500 pl-4"
-                  >
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                      {categoryName}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {fields.map((field) => (
-                        <div key={field}>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {formatFieldName(field)}
-                          </label>
-                          {field === "ubicacion" ? (
-                            <select
-                              value={formData[field] || ""}
-                              onChange={(e) =>
-                                handleInputChange(field, e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                            >
-                              <option value="">
-                                Selecciona una ubicación...
-                              </option>
-                              {ubicaciones.map((ubicacion) => (
-                                <option
-                                  key={ubicacion.codigo}
-                                  value={`${ubicacion.codigo} ${ubicacion.nombre}`}
+                {Object.entries(categories)
+                  .filter(
+                    ([categoryName]) =>
+                      categoryName !== "Control y Administración"
+                  )
+                  .map(([categoryName, fields]) => (
+                    <div
+                      key={categoryName}
+                      className="border-l-4 border-blue-500 pl-4"
+                    >
+                      <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                        {categoryName}
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {fields
+                          .filter((field) => {
+                            // Mostrar pago_mixto solo si forma_pago es DXN
+                            if (field === "pago_mixto") {
+                              return formData.forma_pago === "DXN";
+                            }
+                            return true;
+                          })
+                          .map((field) => (
+                            <div key={field}>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                {formatFieldName(field)}
+                              </label>
+                              {field === "ubicacion" ? (
+                                <select
+                                  value={formData[field] || ""}
+                                  onChange={(e) =>
+                                    handleInputChange(field, e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                 >
-                                  {ubicacion.codigo} {ubicacion.nombre}
-                                </option>
-                              ))}
-                            </select>
-                          ) : field === "tipo_solicitud" ? (
-                            <select
-                              value={formData[field] || ""}
-                              onChange={(e) =>
-                                handleInputChange(field, e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                            >
-                              <option value="">Selecciona un tipo...</option>
-                              <option value="NUEVA">NUEVA</option>
-                              <option value="RENOVACION">RENOVACION</option>
-                            </select>
-                          ) : field === "forma_pago" ? (
-                            <select
-                              value={formData[field] || ""}
-                              onChange={(e) =>
-                                handleInputChange(field, e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                            >
-                              <option value="">
-                                Selecciona una forma de pago...
-                              </option>
-                              <option value="CONT">CONT</option>
-                              <option value="DOM">DOM</option>
-                              <option value="MENS">MENS</option>
-                              <option value="DXN">DXN</option>
-                            </select>
-                          ) : (
-                            <input
-                              type="text"
-                              value={formData[field] || ""}
-                              onChange={(e) =>
-                                handleInputChange(field, e.target.value)
-                              }
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                              placeholder={
-                                extractedData.data[field]?.mapped
-                                  ? ""
-                                  : "No mapeado en plantilla"
-                              }
-                            />
-                          )}
-                        </div>
-                      ))}
+                                  <option value="">
+                                    Selecciona una ubicación...
+                                  </option>
+                                  {ubicaciones.map((ubicacion) => (
+                                    <option
+                                      key={ubicacion.codigo}
+                                      value={`${ubicacion.codigo} ${ubicacion.nombre}`}
+                                    >
+                                      {ubicacion.codigo} {ubicacion.nombre}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : field === "tipo_solicitud" ? (
+                                <select
+                                  value={formData[field] || ""}
+                                  onChange={(e) =>
+                                    handleInputChange(field, e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                >
+                                  <option value="">
+                                    Selecciona un tipo...
+                                  </option>
+                                  <option value="NUEVA">NUEVA</option>
+                                  <option value="RENOVACION">RENOVACION</option>
+                                </select>
+                              ) : field === "forma_pago" ? (
+                                <select
+                                  value={formData[field] || ""}
+                                  onChange={(e) =>
+                                    handleInputChange(field, e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                >
+                                  <option value="">
+                                    Selecciona una forma de pago...
+                                  </option>
+                                  <option value="CONT">CONT</option>
+                                  <option value="DOM">DOM</option>
+                                  <option value="MENS">MENS</option>
+                                  <option value="DXN">DXN</option>
+                                </select>
+                              ) : field === "quincena" ? (
+                                <select
+                                  value={formData[field] || ""}
+                                  onChange={(e) =>
+                                    handleInputChange(field, e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                >
+                                  <option value="">
+                                    Selecciona una quincena...
+                                  </option>
+                                  <option value="1RA ENERO 2026">
+                                    1RA ENERO 2026
+                                  </option>
+                                  <option value="2DA ENERO 2026">
+                                    2DA ENERO 2026
+                                  </option>
+                                  <option value="1RA FEBRERO 2026">
+                                    1RA FEBRERO 2026
+                                  </option>
+                                  <option value="2DA FEBRERO 2026">
+                                    2DA FEBRERO 2026
+                                  </option>
+                                  <option value="1RA MARZO 2026">
+                                    1RA MARZO 2026
+                                  </option>
+                                  <option value="2DA MARZO 2026">
+                                    2DA MARZO 2026
+                                  </option>
+                                  <option value="1RA ABRIL 2026">
+                                    1RA ABRIL 2026
+                                  </option>
+                                  <option value="2DA ABRIL 2026">
+                                    2DA ABRIL 2026
+                                  </option>
+                                  <option value="1RA MAYO 2026">
+                                    1RA MAYO 2026
+                                  </option>
+                                  <option value="2DA MAYO 2026">
+                                    2DA MAYO 2026
+                                  </option>
+                                  <option value="1RA JUNIO 2026">
+                                    1RA JUNIO 2026
+                                  </option>
+                                  <option value="2DA JUNIO 2026">
+                                    2DA JUNIO 2026
+                                  </option>
+                                  <option value="1RA JULIO 2026">
+                                    1RA JULIO 2026
+                                  </option>
+                                  <option value="2DA JULIO 2026">
+                                    2DA JULIO 2026
+                                  </option>
+                                  <option value="1RA AGOSTO 2026">
+                                    1RA AGOSTO 2026
+                                  </option>
+                                  <option value="2DA AGOSTO 2026">
+                                    2DA AGOSTO 2026
+                                  </option>
+                                  <option value="1RA SEPTIEMBRE 2026">
+                                    1RA SEPTIEMBRE 2026
+                                  </option>
+                                  <option value="2DA SEPTIEMBRE 2026">
+                                    2DA SEPTIEMBRE 2026
+                                  </option>
+                                  <option value="1RA OCTUBRE 2026">
+                                    1RA OCTUBRE 2026
+                                  </option>
+                                  <option value="2DA OCTUBRE 2026">
+                                    2DA OCTUBRE 2026
+                                  </option>
+                                  <option value="1RA NOVIEMBRE 2026">
+                                    1RA NOVIEMBRE 2026
+                                  </option>
+                                  <option value="2DA NOVIEMBRE 2026">
+                                    2DA NOVIEMBRE 2026
+                                  </option>
+                                  <option value="1RA DICIEMBRE 2026">
+                                    1RA DICIEMBRE 2026
+                                  </option>
+                                  <option value="2DA DICIEMBRE 2026">
+                                    2DA DICIEMBRE
+                                  </option>
+                                </select>
+                              ) : field === "tipo_trabajador" ? (
+                                <select
+                                  value={formData[field] || ""}
+                                  onChange={(e) =>
+                                    handleInputChange(field, e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                >
+                                  <option value="">
+                                    Selecciona un tipo...
+                                  </option>
+                                  <option value="166">166 - ACTIVOS</option>
+                                  <option value="366">366 - JUBILADOS</option>
+                                </select>
+                              ) : camposFecha.includes(field) ? (
+                                <input
+                                  type="date"
+                                  value={formData[field] || ""}
+                                  onChange={(e) =>
+                                    handleInputChange(field, e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={formData[field] || ""}
+                                  onChange={(e) =>
+                                    handleInputChange(field, e.target.value)
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                  placeholder={
+                                    extractedData.data[field]?.mapped
+                                      ? ""
+                                      : "No mapeado en plantilla"
+                                  }
+                                />
+                              )}
+                            </div>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
               {/* Action Buttons */}

@@ -38,13 +38,39 @@ export async function PATCH(req) {
 
     try {
         const body = await req.json();
-        const { status } = body;
-
+        const { status, buzones } = body;
         const email = session.user.email;
-        const res = await query(
-            "UPDATE users SET status = $1 WHERE LOWER(TRIM(mail)) = LOWER(TRIM($2)) RETURNING *",
-            [status, email]
-        );
+
+        let queryStr = "UPDATE users SET ";
+        const values = [];
+        let paramIndex = 1;
+
+        if (status !== undefined) {
+            queryStr += `status = $${paramIndex}, `;
+            values.push(status);
+            paramIndex++;
+        }
+
+        if (buzones !== undefined) {
+            queryStr += `buzones_permitidos = $${paramIndex}, `;
+            values.push(buzones);
+            paramIndex++;
+        }
+
+        // Remove trailing comma and space
+        queryStr = queryStr.slice(0, -2);
+
+        queryStr += ` WHERE LOWER(TRIM(mail)) = LOWER(TRIM($${paramIndex})) RETURNING *`;
+        values.push(email);
+
+        if (values.length === 1) { // Only email added, no fields
+            return Response.json(
+                { error: "No fields to update provided" },
+                { status: 400 }
+            );
+        }
+
+        const res = await query(queryStr, values);
 
         if (res.rows.length === 0) {
             return Response.json(
