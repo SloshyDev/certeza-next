@@ -36,10 +36,29 @@ export async function POST(req) {
         }
 
         // Check for duplicates
-        if (folio) {
-            const existingFolio = await query(`SELECT id FROM ingresos WHERE folio = $1`, [folio]);
+        if (folio && !body.confirmDuplicate) {
+            const existingFolio = await query(
+                `SELECT i.id, i.folio, i.poliza, i.compania, i.fecha_ingreso_digital, 
+                        i.tipo_ingreso_reingreso, a.nombre as asesor_nombre
+                 FROM ingresos i
+                 LEFT JOIN asesor a ON i.asesor_id = a.id
+                 WHERE i.folio = $1`,
+                [folio]
+            );
             if (existingFolio.rowCount > 0) {
-                return NextResponse.json({ error: `El folio ${folio} ya está registrado` }, { status: 400 });
+                const duplicate = existingFolio.rows[0];
+                return NextResponse.json({
+                    error: `El folio ${folio} ya está registrado`,
+                    isDuplicate: true,
+                    duplicateData: {
+                        folio: duplicate.folio,
+                        poliza: duplicate.poliza || 'N/A',
+                        compania: duplicate.compania || 'N/A',
+                        asesor: duplicate.asesor_nombre || 'N/A',
+                        fecha: duplicate.fecha_ingreso_digital,
+                        estatus: duplicate.tipo_ingreso_reingreso || 'N/A'
+                    }
+                }, { status: 409 });
             }
         }
 

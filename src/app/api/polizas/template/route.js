@@ -113,6 +113,18 @@ export async function GET() {
     templateSheet["!cols"] = [
       { wch: 20 }, // no_poliza
       { wch: 15 }, // clave_asesor
+      { wch: 25 }, // nombre_asegurado
+      { wch: 15 }, // rfc
+      { wch: 30 }, // direccion
+      { wch: 15 }, // telefono
+      { wch: 15 }, // numero_empleado
+      { wch: 15 }, // tipo_trabajador
+      { wch: 20 }, // descripcion_unidad
+      { wch: 10 }, // modelo
+      { wch: 15 }, // tipo_vehiculo
+      { wch: 15 }, // placas
+      { wch: 20 }, // numero_serie
+      { wch: 20 }, // numero_motor
       { wch: 20 }, // cia
       { wch: 12 }, // estatus
       { wch: 12 }, // quincena
@@ -142,6 +154,78 @@ export async function GET() {
         Tipo: "Texto",
         Obligatorio: "Sí",
         Descripción: "Clave del asesor asignado (debe existir en el sistema)",
+      },
+      {
+        Campo: "nombre_asegurado",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Nombre completo del asegurado",
+      },
+      {
+        Campo: "rfc",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "RFC del asegurado (13 caracteres)",
+      },
+      {
+        Campo: "direccion",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Dirección completa del asegurado",
+      },
+      {
+        Campo: "telefono",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Teléfono de contacto",
+      },
+      {
+        Campo: "numero_empleado",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Número de empleado (si aplica)",
+      },
+      {
+        Campo: "tipo_trabajador",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Tipo de trabajador (Base, Confianza, etc.)",
+      },
+      {
+        Campo: "descripcion_unidad",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Descripción del vehículo (Marca, Submarca)",
+      },
+      {
+        Campo: "modelo",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Año modelo del vehículo",
+      },
+      {
+        Campo: "tipo_vehiculo",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Tipo de vehículo (Automóvil, Camioneta, etc.)",
+      },
+      {
+        Campo: "placas",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Placas del vehículo",
+      },
+      {
+        Campo: "numero_serie",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Número de serie (VIN)",
+      },
+      {
+        Campo: "numero_motor",
+        Tipo: "Texto",
+        Obligatorio: "No",
+        Descripción: "Número de motor",
       },
       {
         Campo: "cia",

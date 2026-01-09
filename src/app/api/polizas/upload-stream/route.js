@@ -1,5 +1,5 @@
 import { auth } from "@/../auth";
-import { isDbConfigured } from "@/lib/db";
+import { isExtractorDbConfigured, query } from "@/lib/extractor-db";
 import * as XLSX from "xlsx";
 
 export const runtime = "nodejs";
@@ -57,7 +57,7 @@ function parseDate(dateStr) {
 export async function POST(req) {
   const session = await auth();
   if (!session) return new Response("UNAUTHORIZED", { status: 401 });
-  if (!isDbConfigured())
+  if (!isExtractorDbConfigured())
     return new Response("DB_NOT_CONFIGURED", { status: 500 });
 
   const encoder = new TextEncoder();
@@ -134,274 +134,348 @@ export async function POST(req) {
           errores: [],
         };
 
-        // Validación
-        const validRows = [];
-        const claves = [];
-
+        // Procesar cada fila
         for (let i = 0; i < data.length; i++) {
           const row = data[i];
           const rowNum = i + 2;
 
-          if ((i + 1) % 50 === 0) {
-            const progress = 10 + (i / data.length) * 15;
+          if ((i + 1) % 10 === 0) {
+            const progress = 10 + (i / data.length) * 80;
             sendProgress({
               type: "progress",
-              message: `Validando fila ${i + 1} de ${data.length}...`,
+              message: `Procesando fila ${i + 1} de ${data.length}...`,
               progress: Math.round(progress),
             });
           }
 
           try {
-            // Validar no_poliza (convertir explícitamente a string)
-            const noPolizaValue = normalizeString(row.no_poliza);
+            // Validar campos obligatorios
+            const noPoliza = normalizeString(row.no_poliza);
+            const claveAsesor = normalizeString(row.clave_asesor);
 
-            if (!noPolizaValue) {
+            if (!noPoliza) {
               results.errores.push({
                 fila: rowNum,
-                error: `no_poliza es obligatorio (recibido: '${
-                  row.no_poliza
-                }', tipo: ${typeof row.no_poliza})`,
+                error: "no_poliza es obligatorio",
               });
               continue;
             }
 
-            // Validar clave_asesor
-            const claveAsesorValue = normalizeString(row.clave_asesor);
-
-            if (!claveAsesorValue) {
+            if (!claveAsesor) {
               results.errores.push({
                 fila: rowNum,
-                error: `clave_asesor es obligatorio (recibido: '${
-                  row.clave_asesor
-                }', tipo: ${typeof row.clave_asesor})`,
+                error: "clave_asesor es obligatorio",
               });
               continue;
             }
 
-            claves.push(claveAsesorValue);
+            // ============================================================================
+            // 1. Resolver IDs de catálogos (Asesor, Aseguradora, Forma Pago)
+            // ============================================================================
+            
+            // Buscar asesor
+            const asesorResult = await query(
+              "SELECT id_asesor FROM asesores WHERE clave_asesor = $1",
+              [claveAsesor]
+            );
+            
+            if (asesorResult.rows.length === 0) {
+              results.errores.push({
+                fila: rowNum,
+                error: `Asesor no encontrado: ${claveAsesor}`,
+              });
+              continue;
+            }
+            const idAsesor = asesorResult.rows[0].id_asesor;
 
-            validRows.push({
-              rowNum,
-              no_poliza: noPolizaValue,
-              clave_asesor: claveAsesorValue,
-              cia: normalizeString(row.cia),
-              estatus: normalizeString(row.estatus),
-              quincena: normalizeString(row.quincena),
-              f_desde: parseDate(row.f_desde),
-              f_hasta: parseDate(row.f_hasta),
-              f_ingreso: parseDate(row.f_ingreso),
-              f_vale_recibido: parseDate(row.f_vale_recibido),
-              prima_total: parseNumber(row.prima_total),
-              prima_neta: parseNumber(row.prima_neta),
-              forma_pago: normalizeString(row.forma_pago),
-              folio: normalizeString(row.folio),
-            });
+            // Buscar aseguradora (si se proporciona)
+            let idAseguradora = null;
+            const cia = normalizeString(row.cia);
+            if (cia) {
+              // Intentar buscar exacta o similar
+              const ciaResult = await query(
+                "SELECT id_aseguradora FROM aseguradoras WHERE nombre ILIKE $1",
+                [`%${cia}%`]
+              );
+              
+              if (ciaResult.rows.length > 0) {
+                idAseguradora = ciaResult.rows[0].id_aseguradora;
+              } else {
+                // Crear si no existe (opcional, aquí asumimos que debe existir o creamos una genérica)
+                const newCia = await query(
+                  "INSERT INTO aseguradoras (nombre) VALUES ($1) RETURNING id_aseguradora",
+                  [cia]
+                );
+                idAseguradora = newCia.rows[0].id_aseguradora;
+              }
+            }
+
+            // Buscar forma de pago (si se proporciona)
+            let idFormaPago = null;
+            const formaPago = normalizeString(row.forma_pago);
+            if (formaPago) {
+              const fpResult = await query(
+                "SELECT id_forma_pago FROM formas_pago WHERE nombre ILIKE $1",
+                [`%${formaPago}%`]
+              );
+              
+              if (fpResult.rows.length > 0) {
+                idFormaPago = fpResult.rows[0].id_forma_pago;
+              } else {
+                // Default a alguna forma de pago o crear
+                const newFp = await query(
+                  "INSERT INTO formas_pago (nombre, numero_recibos) VALUES ($1, 1) RETURNING id_forma_pago",
+                  [formaPago]
+                );
+                idFormaPago = newFp.rows[0].id_forma_pago;
+              }
+            }
+
+            // ============================================================================
+            // 2. Insertar o actualizar ASEGURADO
+            // ============================================================================
+            let idAsegurado = null;
+            const nombreAsegurado = normalizeString(row.nombre_asegurado);
+            const rfc = normalizeString(row.rfc);
+
+            if (nombreAsegurado) {
+              const aseguradoExistente = await query(
+                `SELECT id_asegurado FROM asegurados 
+                 WHERE nombre = $1 OR (rfc = $2 AND rfc IS NOT NULL)
+                 LIMIT 1`,
+                [nombreAsegurado, rfc || null]
+              );
+
+              if (aseguradoExistente.rows.length > 0) {
+                idAsegurado = aseguradoExistente.rows[0].id_asegurado;
+                await query(
+                  `UPDATE asegurados 
+                   SET rfc = COALESCE($2, rfc),
+                       direccion = COALESCE($3, direccion),
+                       telefono = COALESCE($4, telefono),
+                       numero_empleado = COALESCE($5, numero_empleado),
+                       tipo_trabajador = COALESCE($6, tipo_trabajador),
+                       updated_at = NOW()
+                   WHERE id_asegurado = $1`,
+                  [
+                    idAsegurado,
+                    rfc,
+                    normalizeString(row.direccion),
+                    normalizeString(row.telefono),
+                    normalizeString(row.numero_empleado),
+                    normalizeString(row.tipo_trabajador),
+                  ]
+                );
+              } else {
+                const newAsegurado = await query(
+                  `INSERT INTO asegurados (nombre, rfc, direccion, telefono, numero_empleado, tipo_trabajador)
+                   VALUES ($1, $2, $3, $4, $5, $6)
+                   RETURNING id_asegurado`,
+                  [
+                    nombreAsegurado,
+                    rfc,
+                    normalizeString(row.direccion),
+                    normalizeString(row.telefono),
+                    normalizeString(row.numero_empleado),
+                    normalizeString(row.tipo_trabajador),
+                  ]
+                );
+                idAsegurado = newAsegurado.rows[0].id_asegurado;
+              }
+            }
+
+            // ============================================================================
+            // 3. Insertar o actualizar VEHÍCULO
+            // ============================================================================
+            let idVehiculo = null;
+            const placas = normalizeString(row.placas);
+            const serie = normalizeString(row.numero_serie);
+            const descUnidad = normalizeString(row.descripcion_unidad);
+
+            if (descUnidad || placas || serie) {
+              const vehiculoExistente = await query(
+                `SELECT id_vehiculo FROM vehiculos 
+                 WHERE (placas = $1 AND placas IS NOT NULL) 
+                    OR (numero_serie = $2 AND numero_serie IS NOT NULL)
+                 LIMIT 1`,
+                [placas, serie]
+              );
+
+              if (vehiculoExistente.rows.length > 0) {
+                idVehiculo = vehiculoExistente.rows[0].id_vehiculo;
+                await query(
+                  `UPDATE vehiculos 
+                   SET id_asegurado = COALESCE($2, id_asegurado),
+                       descripcion_unidad = COALESCE($3, descripcion_unidad),
+                       modelo = COALESCE($4, modelo),
+                       tipo = COALESCE($5, tipo),
+                       placas = COALESCE($6, placas),
+                       numero_serie = COALESCE($7, numero_serie),
+                       numero_motor = COALESCE($8, numero_motor)
+                   WHERE id_vehiculo = $1`,
+                  [
+                    idVehiculo,
+                    idAsegurado, // Asociar con el asegurado procesado (si existe)
+                    descUnidad,
+                    normalizeString(row.modelo),
+                    normalizeString(row.tipo_vehiculo),
+                    placas,
+                    serie,
+                    normalizeString(row.numero_motor),
+                  ]
+                );
+              } else {
+                const newVehiculo = await query(
+                  `INSERT INTO vehiculos (id_asegurado, descripcion_unidad, modelo, tipo, placas, numero_serie, numero_motor)
+                   VALUES ($1, $2, $3, $4, $5, $6, $7)
+                   RETURNING id_vehiculo`,
+                  [
+                    idAsegurado,
+                    descUnidad,
+                    normalizeString(row.modelo),
+                    normalizeString(row.tipo_vehiculo),
+                    placas,
+                    serie,
+                    normalizeString(row.numero_motor),
+                  ]
+                );
+                idVehiculo = newVehiculo.rows[0].id_vehiculo;
+              }
+            }
+
+            // ============================================================================
+            // 4. Insertar o actualizar PÓLIZA
+            // ============================================================================
+            
+            // Verificar si existe la póliza
+            const polizaExistente = await query(
+              "SELECT id_poliza FROM polizas WHERE numero_poliza = $1 LIMIT 1",
+              [noPoliza]
+            );
+
+            if (polizaExistente.rows.length > 0) {
+              // Actualizar
+              await query(
+                `UPDATE polizas
+                 SET id_asegurado = COALESCE($2, id_asegurado),
+                     id_vehiculo = COALESCE($3, id_vehiculo),
+                     id_aseguradora = COALESCE($4, id_aseguradora),
+                     id_asesor = $5,
+                     id_forma_pago = COALESCE($6, id_forma_pago),
+                     fecha_desde = COALESCE($7, fecha_desde),
+                     fecha_hasta = COALESCE($8, fecha_hasta),
+                     fecha_emision = COALESCE($9, fecha_emision),
+                     prima_neta = COALESCE($10, prima_neta),
+                     prima_total = COALESCE($11, prima_total),
+                     ubicacion = COALESCE($12, ubicacion),
+                     estado = COALESCE($13, estado),
+                     numero_folio = COALESCE($14, numero_folio),
+                     updated_at = NOW()
+                 WHERE id_poliza = $1`,
+                [
+                  polizaExistente.rows[0].id_poliza,
+                  idAsegurado,
+                  idVehiculo,
+                  idAseguradora,
+                  idAsesor,
+                  idFormaPago,
+                  parseDate(row.f_desde),
+                  parseDate(row.f_hasta),
+                  parseDate(row.f_ingreso), // Usamos f_ingreso como fecha_emision por simplicidad si no hay otra
+                  parseNumber(row.prima_neta),
+                  parseNumber(row.prima_total),
+                  null, // ubicacion no viene en el excel explícitamente, o podríamos mapearlo
+                  normalizeString(row.estatus),
+                  normalizeString(row.folio)
+                ]
+              );
+              results.actualizadas++;
+            } else {
+              // Insertar
+              await query(
+                `INSERT INTO polizas (
+                  numero_poliza, id_asegurado, id_vehiculo, id_aseguradora, id_asesor,
+                  id_forma_pago, fecha_desde, fecha_hasta, fecha_emision,
+                  prima_neta, prima_total, estado, numero_folio
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+                [
+                  noPoliza,
+                  idAsegurado,
+                  idVehiculo,
+                  idAseguradora,
+                  idAsesor,
+                  idFormaPago,
+                  parseDate(row.f_desde),
+                  parseDate(row.f_hasta),
+                  parseDate(row.f_ingreso),
+                  parseNumber(row.prima_neta),
+                  parseNumber(row.prima_total),
+                  normalizeString(row.estatus) || 'ACTIVA',
+                  normalizeString(row.folio)
+                ]
+              );
+              results.creadas++;
+            }
+
+            // ============================================================================
+            // 5. Insertar VALES (si aplica)
+            // ============================================================================
+            const noVale = normalizeString(row.no_vale);
+            if (noVale) {
+              // Necesitamos el ID de la póliza (recién creada o actualizada)
+              const polizaIdRes = await query(
+                "SELECT id_poliza FROM polizas WHERE numero_poliza = $1 LIMIT 1",
+                [noPoliza]
+              );
+              
+              if (polizaIdRes.rows.length > 0) {
+                const idPoliza = polizaIdRes.rows[0].id_poliza;
+                
+                // Verificar si existe el vale
+                const valeExistente = await query(
+                  "SELECT id_vale FROM vales WHERE numero_vale = $1 AND id_poliza = $2",
+                  [noVale, idPoliza]
+                );
+
+                if (valeExistente.rows.length === 0) {
+                  await query(
+                    `INSERT INTO vales (id_poliza, numero_vale, fecha_ingreso_vales, quincena, estado_vale)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [
+                      idPoliza,
+                      noVale,
+                      parseDate(row.f_vale_recibido),
+                      normalizeString(row.quincena),
+                      'Pendiente'
+                    ]
+                  );
+                }
+              }
+            }
+
           } catch (error) {
+            console.error(`Error en fila ${rowNum}:`, error);
             results.errores.push({
               fila: rowNum,
-              error: error.message || "Error al validar datos",
+              error: error.message || "Error desconocido al procesar fila",
             });
           }
-        }
-
-        if (validRows.length === 0) {
-          sendProgress({
-            type: "complete",
-            ...results,
-            mensaje: "No hay filas válidas para procesar",
-            progress: 100,
-          });
-          controller.close();
-          return;
         }
 
         sendProgress({
-          type: "progress",
-          message: "Consultando asesores y pólizas existentes...",
-          progress: 30,
+          type: "complete",
+          message: "Proceso completado",
+          progress: 100,
+          results,
         });
-
-        // Importar funciones de consulta batch
-        const { Pool } = await import("pg");
-        const pool = new Pool({
-          connectionString: process.env.DATABASE_URL,
-        });
-
-        const client = await pool.connect();
-
-        try {
-          // Consultar asesores y pólizas existentes
-          const uniqueClaves = [
-            ...new Set(claves.filter((c) => c && c.trim())),
-          ];
-          const uniquePolizas = [...new Set(validRows.map((r) => r.no_poliza))];
-
-          const [asesoresResult, polizasResult] = await Promise.all([
-            client.query("SELECT id, clave FROM asesor WHERE clave = ANY($1)", [
-              uniqueClaves,
-            ]),
-            client.query(
-              "SELECT no_poliza FROM polizas WHERE no_poliza::text = ANY($1::text[])",
-              [uniquePolizas.map((p) => String(p))]
-            ),
-          ]);
-
-          const asesoresMap = new Map();
-          asesoresResult.rows.forEach((row) =>
-            asesoresMap.set(row.clave, row.id)
-          );
-
-          const existingPolizasSet = new Set();
-          polizasResult.rows.forEach((row) =>
-            existingPolizasSet.add(String(row.no_poliza))
-          );
-
-          sendProgress({
-            type: "progress",
-            message: "Preparando actualizaciones...",
-            progress: 40,
-          });
-
-          // Preparar solo para UPDATE (no crear nuevas)
-          const polizasToUpdate = [];
-
-          for (const row of validRows) {
-            const asesorId = asesoresMap.get(row.clave_asesor);
-
-            if (!asesorId) {
-              results.errores.push({
-                fila: row.rowNum,
-                error: `No se encontró asesor con clave: ${row.clave_asesor}`,
-              });
-              continue;
-            }
-
-            // Verificar que la póliza exista (comparar como string)
-            if (!existingPolizasSet.has(String(row.no_poliza))) {
-              results.errores.push({
-                fila: row.rowNum,
-                error: `Póliza ${row.no_poliza} no existe en la base de datos (solo se actualizan pólizas existentes)`,
-              });
-              continue;
-            }
-
-            polizasToUpdate.push({
-              no_poliza: row.no_poliza,
-              asesor_id: parseInt(asesorId, 10),
-              cia: row.cia,
-              estatus: row.estatus,
-              quincena: row.quincena,
-              f_desde: row.f_desde,
-              f_hasta: row.f_hasta,
-              f_ingreso: row.f_ingreso,
-              f_vale_recibido: row.f_vale_recibido,
-              prima_total: row.prima_total,
-              prima_neta: row.prima_neta,
-              forma_pago: row.forma_pago,
-              folio: row.folio,
-            });
-          }
-
-          await client.query("BEGIN");
-
-          const CHUNK_SIZE = 100;
-          let processed = 0;
-          const total = polizasToUpdate.length;
-
-          // Procesar solo UPDATEs en chunks
-          for (let i = 0; i < polizasToUpdate.length; i += CHUNK_SIZE) {
-            const chunk = polizasToUpdate.slice(i, i + CHUNK_SIZE);
-
-            // Batch update
-            const noPolizas = chunk.map((p) => p.no_poliza);
-            const values = chunk.flatMap((p) => [
-              p.no_poliza,
-              p.asesor_id,
-              p.cia,
-              p.estatus,
-              p.quincena,
-              p.f_desde,
-              p.f_hasta,
-              p.f_ingreso,
-              p.f_vale_recibido,
-              p.prima_total,
-              p.prima_neta,
-              p.forma_pago,
-              p.folio,
-            ]);
-
-            const buildCaseWhen = (fieldIndex) => {
-              return chunk
-                .map(
-                  (_, idx) =>
-                    `WHEN no_poliza = $${idx * 13 + 1} THEN $${
-                      idx * 13 + fieldIndex + 1
-                    }`
-                )
-                .join(" ");
-            };
-
-            const updateQuery = `
-              UPDATE polizas SET
-                asesor_id = (CASE ${buildCaseWhen(1)} END)::INTEGER,
-                cia = CASE ${buildCaseWhen(2)} END,
-                estatus = CASE ${buildCaseWhen(3)} END,
-                quincena = CASE ${buildCaseWhen(4)} END,
-                f_desde = (CASE ${buildCaseWhen(5)} END)::DATE,
-                f_hasta = (CASE ${buildCaseWhen(6)} END)::DATE,
-                f_ingreso = (CASE ${buildCaseWhen(7)} END)::DATE,
-                f_vale_recibido = (CASE ${buildCaseWhen(8)} END)::DATE,
-                prima_total = (CASE ${buildCaseWhen(9)} END)::NUMERIC,
-                prima_neta = (CASE ${buildCaseWhen(10)} END)::NUMERIC,
-                forma_pago = CASE ${buildCaseWhen(11)} END,
-                folio = CASE ${buildCaseWhen(12)} END,
-                f_actualizacion = CURRENT_DATE,
-                contador_cambios = COALESCE(contador_cambios, 0) + 1
-              WHERE no_poliza = ANY($${values.length + 1})
-            `;
-
-            await client.query(updateQuery, [...values, noPolizas]);
-            results.actualizadas += chunk.length;
-            processed += chunk.length;
-
-            const progress = 40 + (processed / total) * 50;
-            sendProgress({
-              type: "progress",
-              message: `Actualizando pólizas: ${processed} de ${total}...`,
-              progress: Math.round(progress),
-              actualizadas: results.actualizadas,
-              creadas: results.creadas,
-            });
-          }
-
-          await client.query("COMMIT");
-
-          sendProgress({
-            type: "complete",
-            ...results,
-            mensaje: `Procesadas ${results.total} filas: ${results.actualizadas} actualizadas, ${results.errores.length} errores (no se crean nuevas pólizas)`,
-            progress: 100,
-          });
-        } catch (error) {
-          await client.query("ROLLBACK");
-          sendProgress({
-            type: "error",
-            error: error.message || "Error al procesar",
-            progress: 0,
-          });
-        } finally {
-          client.release();
-          await pool.end();
-        }
-
         controller.close();
       } catch (error) {
-        console.error("Error en stream:", error);
+        console.error("Error general:", error);
         controller.enqueue(
           encoder.encode(
             `data: ${JSON.stringify({
               type: "error",
-              error: error.message || "Error desconocido",
+              error: error.message || "Error interno del servidor",
               progress: 0,
             })}\n\n`
           )

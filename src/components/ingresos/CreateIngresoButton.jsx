@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, XMarkIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { useRouter } from "next/navigation";
 
 export default function CreateIngresoButton({ asesores }) {
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+    const [duplicateInfo, setDuplicateInfo] = useState(null);
     const router = useRouter();
 
     const [form, setForm] = useState({
@@ -26,22 +28,34 @@ export default function CreateIngresoButton({ asesores }) {
         setForm(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, confirmDuplicate = false) => {
         e.preventDefault();
         setLoading(true);
         try {
             const res = await fetch("/api/ingresos/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(form)
+                body: JSON.stringify({ ...form, confirmDuplicate })
             });
 
+            const data = await res.json();
+
+            // Si es un duplicado y no se ha confirmado, mostrar advertencia
+            if (res.status === 409 && data.isDuplicate && !confirmDuplicate) {
+                setDuplicateInfo(data.duplicateData);
+                setShowDuplicateWarning(true);
+                setLoading(false);
+                return;
+            }
+
             if (!res.ok) {
-                const data = await res.json();
                 throw new Error(data.error || "Error creando registro");
             }
 
+            // Éxito
             setIsOpen(false);
+            setShowDuplicateWarning(false);
+            setDuplicateInfo(null);
             router.refresh();
             // Reset form (optional, or keep date)
             setForm(prev => ({ ...prev, folio: "", poliza: "", observacion: "" }));
@@ -51,6 +65,18 @@ export default function CreateIngresoButton({ asesores }) {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleConfirmDuplicate = async () => {
+        // Crear un evento sintético para pasar a handleSubmit
+        const syntheticEvent = { preventDefault: () => { } };
+        await handleSubmit(syntheticEvent, true);
+    };
+
+    const handleCancelDuplicate = () => {
+        setShowDuplicateWarning(false);
+        setDuplicateInfo(null);
+        setLoading(false);
     };
 
     return (
@@ -203,6 +229,77 @@ export default function CreateIngresoButton({ asesores }) {
                                 </button>
                             </div>
                         </form>
+                    </DialogPanel>
+                </div>
+            </Dialog>
+
+            {/* Diálogo de advertencia de duplicado */}
+            <Dialog open={showDuplicateWarning} onClose={handleCancelDuplicate} className="relative z-50">
+                <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+
+                <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+                    <DialogPanel className="max-w-md w-full bg-background border border-border rounded-lg shadow-xl p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0">
+                                <ExclamationTriangleIcon className="w-10 h-10 text-yellow-500" />
+                            </div>
+                            <div className="flex-1">
+                                <DialogTitle className="text-lg font-bold mb-2">
+                                    Folio Duplicado Detectado
+                                </DialogTitle>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    El folio <strong>{duplicateInfo?.folio}</strong> ya existe en el sistema con los siguientes datos:
+                                </p>
+
+                                {duplicateInfo && (
+                                    <div className="bg-muted/50 rounded-lg p-3 mb-4 space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Póliza:</span>
+                                            <span className="font-medium">{duplicateInfo.poliza}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Compañía:</span>
+                                            <span className="font-medium">{duplicateInfo.compania}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Asesor:</span>
+                                            <span className="font-medium">{duplicateInfo.asesor}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Estatus:</span>
+                                            <span className="font-medium">{duplicateInfo.estatus}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Fecha:</span>
+                                            <span className="font-medium">
+                                                {duplicateInfo.fecha ? new Date(duplicateInfo.fecha).toLocaleDateString('es-MX') : 'N/A'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <p className="text-sm text-muted-foreground mb-4">
+                                    ¿Deseas guardar este registro de todas formas?
+                                </p>
+
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={handleCancelDuplicate}
+                                        className="btn-secondary"
+                                        disabled={loading}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleConfirmDuplicate}
+                                        className="btn-primary bg-yellow-600 hover:bg-yellow-700"
+                                        disabled={loading}
+                                    >
+                                        {loading ? "Guardando..." : "Sí, Guardar"}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </DialogPanel>
                 </div>
             </Dialog>
