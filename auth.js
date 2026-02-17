@@ -11,6 +11,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
     !dbUrl.includes("user:password@host:port");
   const pool = hasDb ? new Pool({ connectionString: dbUrl }) : null;
   return {
+trustHost: true,
     providers: [
       AzureAd({
         clientId: process.env.AZURE_AD_CLIENT_ID,

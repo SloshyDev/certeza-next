@@ -15,6 +15,7 @@ export const TYPE_COLORS = {
   COTIZACION: "#3892ff",
   EMISION: "#04e995",
   CANCELACION: "#fbbf24",
+  OTRO:"#111111",
   REEXPEDICION: "#f87171",
   REEXPEDICON: "#f87171", // Typo support
   ENDOSO: "#c27aff",
