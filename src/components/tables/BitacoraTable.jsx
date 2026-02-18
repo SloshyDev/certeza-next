@@ -28,6 +28,7 @@ const ESTATUS_OPTIONS = [
   "COMPLETO",
   "PENDIENTE ASESOR",
   "PENDIENTE COMPAÑIA",
+  "PENDIENTE CAPTURA",
   "PENDIENTE",
   "ERROR",
   "NO PROCEDE",
@@ -90,7 +91,7 @@ export default function BitacoraTable({
     fetch("/api/asesores")
       .then((r) => r.json())
       .then((list) => setAsesores(Array.isArray(list) ? list : []))
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   async function handleTipoChange(id, nextTipo) {
@@ -104,7 +105,7 @@ export default function BitacoraTable({
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error("update-failed");
       setRows((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, tipo: nextTipo } : r))
+        prev.map((r) => (r.id === id ? { ...r, tipo: nextTipo } : r)),
       );
     } catch (e) {
       // no comments
@@ -153,7 +154,7 @@ export default function BitacoraTable({
           const res = await fetch("/api/emisores");
           const list = await res.json();
           if (Array.isArray(list)) setEmisores(list);
-        } catch (e) { }
+        } catch (e) {}
       }
       return;
     }
@@ -166,9 +167,9 @@ export default function BitacoraTable({
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error("estatus-update-failed");
       setRows((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, estatus: nextStatus } : r))
+        prev.map((r) => (r.id === id ? { ...r, estatus: nextStatus } : r)),
       );
-    } catch (e) { }
+    } catch (e) {}
   }
 
   async function handleSetRespondido(id) {
@@ -207,13 +208,13 @@ export default function BitacoraTable({
         prev.map((r) =>
           r.id === id
             ? { ...r, tiempo_respuesta_min: row.tiempo_respuesta_min }
-            : r
-        )
+            : r,
+        ),
       );
       setRespondidoModalId(null);
       setRespondidoFecha("");
       setRespondidoHora("");
-    } catch (e) { }
+    } catch (e) {}
   }
 
   const { data: session } = useSession();
@@ -239,12 +240,12 @@ export default function BitacoraTable({
         prev.map((r) =>
           r.id === id
             ? { ...r, emisor: json.row.emisor, estatus: json.row.estatus }
-            : r
-        )
+            : r,
+        ),
       );
       setShowChangeEmisorId(null);
       setChangeEmisorForm({ emisor: "", motivo: "" });
-    } catch (e) { }
+    } catch (e) {}
   }
 
   async function handleAddPoliza(id, asesorId) {
@@ -263,7 +264,7 @@ export default function BitacoraTable({
       const json = await res.json();
       if (!res.ok || !json.ok) throw new Error("create-poliza-failed");
       setRows((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, no_poliza } : r))
+        prev.map((r) => (r.id === id ? { ...r, no_poliza } : r)),
       );
       setPolizaInputMap((m) => ({ ...m, [id]: "" }));
       setPolizaModalId(null);
@@ -278,12 +279,12 @@ export default function BitacoraTable({
     () => [
       ...(showEmisor
         ? [
-          columnHelper.accessor("emisor", {
-            header: () => "Emisor",
-            cell: (info) => info.getValue() || "",
-            enableGrouping: true,
-          }),
-        ]
+            columnHelper.accessor("emisor", {
+              header: () => "Emisor",
+              cell: (info) => info.getValue() || "",
+              enableGrouping: true,
+            }),
+          ]
         : []),
       columnHelper.accessor("id", {
         header: () => "ID",
@@ -310,23 +311,23 @@ export default function BitacoraTable({
       }),
       ...(canDelete
         ? [
-          columnHelper.display({
-            id: "acciones",
-            header: () => "Acciones",
-            cell: ({ row }) => {
-              const id = row.original?.id;
-              return (
-                <button
-                  className="px-2 py-1 border rounded text-red-600"
-                  onClick={() => handleDelete(id)}
-                >
-                  Eliminar
-                </button>
-              );
-            },
-            size: 120,
-          }),
-        ]
+            columnHelper.display({
+              id: "acciones",
+              header: () => "Acciones",
+              cell: ({ row }) => {
+                const id = row.original?.id;
+                return (
+                  <button
+                    className="px-2 py-1 border rounded text-red-600"
+                    onClick={() => handleDelete(id)}
+                  >
+                    Eliminar
+                  </button>
+                );
+              },
+              size: 120,
+            }),
+          ]
         : []),
       columnHelper.display({
         id: "llegada",
@@ -374,35 +375,35 @@ export default function BitacoraTable({
       }),
       ...(showRespColumn
         ? [
-          columnHelper.accessor("tiempo_respuesta_min", {
-            header: () => "Resp. (hh:mm)",
-            cell: (info) => {
-              const v = info.getValue();
-              if (v == null) {
-                const id = info.row.original?.id;
-                return !canEdit ? (
-                  <span className="text-primary font-bold dark:text-yellow-300">
-                    En proceso...
-                  </span>
-                ) : (
-                  <button
-                    className="px-2 py-1 border rounded bg-gray-100 dark:text-black"
-                    disabled={!canEdit}
-                    onClick={() => handleSetRespondido(id)}
-                  >
-                    Añadir resp.
-                  </button>
-                );
-              }
-              const h = Math.floor(Number(v) / 60);
-              const m = Math.abs(Number(v) % 60);
-              const hh = String(h).padStart(2, "0");
-              const mm = String(m).padStart(2, "0");
-              return `${hh}:${mm}`;
-            },
-            size: 120,
-          }),
-        ]
+            columnHelper.accessor("tiempo_respuesta_min", {
+              header: () => "Resp. (hh:mm)",
+              cell: (info) => {
+                const v = info.getValue();
+                if (v == null) {
+                  const id = info.row.original?.id;
+                  return !canEdit ? (
+                    <span className="text-primary font-bold dark:text-yellow-300">
+                      En proceso...
+                    </span>
+                  ) : (
+                    <button
+                      className="px-2 py-1 border rounded bg-gray-100 dark:text-black"
+                      disabled={!canEdit}
+                      onClick={() => handleSetRespondido(id)}
+                    >
+                      Añadir resp.
+                    </button>
+                  );
+                }
+                const h = Math.floor(Number(v) / 60);
+                const m = Math.abs(Number(v) % 60);
+                const hh = String(h).padStart(2, "0");
+                const mm = String(m).padStart(2, "0");
+                return `${hh}:${mm}`;
+              },
+              size: 120,
+            }),
+          ]
         : []),
       columnHelper.display({
         id: "estatus-edit",
@@ -467,7 +468,7 @@ export default function BitacoraTable({
         size: 200,
       }),
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -507,7 +508,7 @@ export default function BitacoraTable({
                     >
                       {flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                       {{ asc: " ▲", desc: " ▼" }[header.column.getIsSorted()] ||
                         null}
@@ -524,8 +525,9 @@ export default function BitacoraTable({
             return (
               <Fragment key={row.id}>
                 <tr
-                  className={`block md:table-row border border-border md:border-0 md:border-t mb-4 md:mb-0 ${isExpanded ? "rounded-t-lg border-b-0" : "rounded-lg"
-                    }`}
+                  className={`block md:table-row border border-border md:border-0 md:border-t mb-4 md:mb-0 ${
+                    isExpanded ? "rounded-t-lg border-b-0" : "rounded-lg"
+                  }`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <td
@@ -547,7 +549,7 @@ export default function BitacoraTable({
                           ) : null}
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </div>
                       </div>

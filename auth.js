@@ -11,7 +11,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
     !dbUrl.includes("user:password@host:port");
   const pool = hasDb ? new Pool({ connectionString: dbUrl }) : null;
   return {
-trustHost: true,
+    trustHost: true,
     providers: [
       AzureAd({
         clientId: process.env.AZURE_AD_CLIENT_ID,
@@ -27,7 +27,7 @@ trustHost: true,
       }),
     ],
     session: { strategy: "jwt" },
-    secret: process.env.AUTH_SECRET,
+    secret: process.env.NEXTAUTH_SECRET,
     callbacks: {
       async redirect({ url, baseUrl }) {
         // Allow relative callback URLs
@@ -57,30 +57,30 @@ trustHost: true,
                VALUES ($1, $2, $3)
                ON CONFLICT (email) DO UPDATE SET name=EXCLUDED.name, external_id=EXCLUDED.external_id
                RETURNING id`,
-              [profile.email, profile.name ?? null, profile.sub ?? null]
+              [profile.email, profile.name ?? null, profile.sub ?? null],
             );
             const userId = upsert.rows[0]?.id;
             token.userId = userId;
             await client.query(
-              `ALTER TABLE IF EXISTS users_auth ADD COLUMN IF NOT EXISTS alias text`
+              `ALTER TABLE IF EXISTS users_auth ADD COLUMN IF NOT EXISTS alias text`,
             );
             const localAlias = String(profile.email).split("@")[0];
             await client.query(
               `UPDATE users_auth SET alias = CASE WHEN alias IS NULL OR alias='' THEN $2 ELSE alias END WHERE email = $1`,
-              [profile.email, localAlias]
+              [profile.email, localAlias],
             );
             const hasAnyRole = await client.query(
               `SELECT 1 FROM user_roles WHERE user_id=$1 LIMIT 1`,
-              [userId]
+              [userId],
             );
             if (!hasAnyRole.rows[0]) {
               const viewer = await client.query(
-                `SELECT id FROM roles WHERE name='viewer' LIMIT 1`
+                `SELECT id FROM roles WHERE name='viewer' LIMIT 1`,
               );
               if (viewer.rows[0]) {
                 await client.query(
                   `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-                  [userId, viewer.rows[0].id]
+                  [userId, viewer.rows[0].id],
                 );
               }
             }
@@ -93,7 +93,7 @@ trustHost: true,
           try {
             const res = await client.query(
               `SELECT id FROM users_auth WHERE email=$1`,
-              [token.email]
+              [token.email],
             );
             if (res.rows[0]) token.userId = res.rows[0].id;
           } finally {
@@ -119,11 +119,11 @@ trustHost: true,
               const client = await pool.connect();
               try {
                 await client.query(
-                  `ALTER TABLE IF EXISTS users_auth ADD COLUMN IF NOT EXISTS alias text`
+                  `ALTER TABLE IF EXISTS users_auth ADD COLUMN IF NOT EXISTS alias text`,
                 );
                 const res = await client.query(
                   `SELECT alias FROM users_auth WHERE email=$1`,
-                  [session.user.email]
+                  [session.user.email],
                 );
                 const a = res.rows[0]?.alias;
                 session.user.alias =
@@ -132,7 +132,7 @@ trustHost: true,
                   const localAlias = String(session.user.email).split("@")[0];
                   await client.query(
                     `UPDATE users_auth SET alias = $2 WHERE email = $1`,
-                    [session.user.email, localAlias]
+                    [session.user.email, localAlias],
                   );
                   session.user.alias = localAlias;
                 }
