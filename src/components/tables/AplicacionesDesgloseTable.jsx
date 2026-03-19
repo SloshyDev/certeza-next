@@ -157,8 +157,8 @@ export default function AplicacionesDesgloseTable({ data = [] }) {
             ))}
           </thead>
           <tbody className="divide-y divide-border">
-            {table.getRowModel().rows.map((row) => (
-              <Fragment key={row.id}>
+            {table.getRowModel().rows.map((row, idx) => (
+              <Fragment key={`row-${row.id}-${idx}`}>
                 <tr className={`hover:bg-primary/[0.02] transition-colors ${expandedRows[row.id] ? 'bg-primary/[0.03]' : ''}`}>
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-6 py-4 whitespace-nowrap">

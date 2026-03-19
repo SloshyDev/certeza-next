@@ -14,7 +14,7 @@ export default function AplicacionHistoryTimeline({ history = [] }) {
   return (
     <div className="relative space-y-4 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border/50 before:to-transparent">
       {history.map((item, idx) => (
-        <div key={item.id || idx} className="relative flex items-start gap-6 group">
+        <div key={`hist-${item.id || idx}`} className="relative flex items-start gap-6 group">
           {/* Dot */}
           <div className="absolute left-5 -translate-x-1/2 mt-1.5 w-2.5 h-2.5 rounded-full border-2 border-background bg-primary z-10 group-hover:scale-125 transition-transform" />
           
