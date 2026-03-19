@@ -86,6 +86,15 @@ export default async function RootLayout({ children }) {
                           Drive
                         </Link>
                       ) : null}
+                      {isAdmin(session) ? (
+                        <Link href="/admin/aplicaciones/desglose" className="btn-secondary gap-2">
+                          <ClipboardDocumentListIcon
+                            className="h-4 w-4 text-foreground"
+                            aria-hidden="true"
+                          />
+                          Aplicaciones
+                        </Link>
+                      ) : null}
                       <Link href="/bitacora" className="btn-secondary gap-2">
                         <ClipboardDocumentListIcon
                           className="h-4 w-4 text-foreground"

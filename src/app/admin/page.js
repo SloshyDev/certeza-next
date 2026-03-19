@@ -44,9 +44,13 @@ export default async function AdminPage() {
             <p className="mt-2 text-muted-foreground">
               Gestiona roles y accesos de usuarios
             </p>
-            <div className="mt-4 flex gap-4">
-              <Link href="/admin/asesores" className="text-primary hover:underline">
+            <div className="mt-4 flex flex-wrap gap-4">
+              <Link href="/admin/asesores" className="text-primary hover:underline font-medium">
                 Administrar Asesores
+              </Link>
+              <span className="text-muted-foreground">|</span>
+              <Link href="/admin/aplicaciones/desglose" className="text-primary hover:underline font-medium">
+                Desglose de Aplicaciones
               </Link>
             </div>
           </div>
