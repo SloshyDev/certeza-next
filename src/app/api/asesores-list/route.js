@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getAsesores } from "@/lib/extractor";
+import { listAsesores } from "@/lib/asesor";
 
 export async function GET() {
   try {
-    const asesores = await getAsesores();
+    const asesores = await listAsesores();
     return NextResponse.json({ success: true, asesores });
   } catch (error) {
     console.error("Error en /api/asesores-list:", error);

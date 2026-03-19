@@ -9,6 +9,7 @@ export default function AplicacionesDesglosePage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [asesores, setAsesores] = useState([]);
 
   const fetchDesglose = useCallback(async (searchPoliza = "") => {
     setLoading(true);
@@ -36,6 +37,20 @@ export default function AplicacionesDesglosePage() {
 
   useEffect(() => {
     fetchDesglose();
+    
+    // Fetch asesores list
+    const fetchAsesores = async () => {
+      try {
+        const res = await fetch('/api/asesores-list');
+        const result = await res.json();
+        if (result.success) {
+          setAsesores(result.asesores || []);
+        }
+      } catch (err) {
+        console.error("Error fetching asesores:", err);
+      }
+    };
+    fetchAsesores();
   }, [fetchDesglose]);
 
   const handleSearch = (e) => {
@@ -116,7 +131,7 @@ export default function AplicacionesDesglosePage() {
                   </span>
                 </h2>
               </div>
-              <AplicacionesDesgloseTable data={data} />
+              <AplicacionesDesgloseTable data={data} asesores={asesores} onUpdate={fetchDesglose} />
             </div>
           ) : loading && (
             <div className="py-20 text-center space-y-4">

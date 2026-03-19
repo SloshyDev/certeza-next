@@ -8,12 +8,12 @@ import {
   useReactTable,
   createColumnHelper,
 } from "@tanstack/react-table";
-import { ChevronDownIcon, ChevronRightIcon, DocumentTextIcon, CalendarIcon, UserIcon, HashtagIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronRightIcon, DocumentTextIcon, CalendarIcon, UserIcon, HashtagIcon, ClockIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import AplicacionHistoryTimeline from "@/components/aplicaciones/AplicacionHistoryTimeline";
 
 const columnHelper = createColumnHelper();
 
-export default function AplicacionesDesgloseTable({ data = [] }) {
+export default function AplicacionesDesgloseTable({ data = [], asesores = [], onUpdate = () => {} }) {
   const [mounted, setMounted] = useState(false);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -28,6 +28,32 @@ export default function AplicacionesDesgloseTable({ data = [] }) {
       ...prev,
       [rowId]: !prev[rowId]
     }));
+  };
+
+  const [updatingAsesor, setUpdatingAsesor] = useState(null);
+
+  const handleAsesorChange = async (aplicacionId, asesorId) => {
+    if (!asesorId) return;
+    
+    setUpdatingAsesor(aplicacionId);
+    try {
+      const res = await fetch("/api/aplicaciones/update-asesor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: aplicacionId, asesorId }),
+      });
+      const result = await res.json();
+      if (result.ok) {
+        onUpdate();
+      } else {
+        alert("Error al actualizar asesor: " + (result.error || "Error desconocido"));
+      }
+    } catch (err) {
+      console.error("Error updating advisor:", err);
+      alert("Error de conexión al actualizar asesor");
+    } finally {
+      setUpdatingAsesor(null);
+    }
   };
 
   const columns = useMemo(
@@ -85,12 +111,44 @@ export default function AplicacionesDesgloseTable({ data = [] }) {
       }),
       columnHelper.accessor("asesor_nombre", {
         header: "Asesor",
-        cell: (info) => (
-          <div className="flex items-center gap-2">
-            <UserIcon className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-sm truncate max-w-[150px]">{info.getValue() || "N/A"}</span>
-          </div>
-        ),
+        cell: (info) => {
+          const row = info.row.original;
+          const currentAsesorName = info.getValue() || "Sin Asesor";
+          const isUpdating = updatingAsesor === row.id;
+
+          return (
+            <div className="flex items-center gap-2">
+              <UserIcon className="w-3.5 h-3.5 text-muted-foreground" />
+              {asesores && asesores.length > 0 ? (
+                <div className="relative">
+                  <select
+                    className={`text-[11px] py-0.5 px-2 pr-6 rounded border border-border bg-gray-50 dark:bg-gray-900 focus:ring-1 focus:ring-primary/30 max-w-[140px] truncate appearance-none ${!info.getValue() ? 'text-red-600 font-bold border-red-200 bg-red-50' : 'text-foreground'}`}
+                    value={row.asesor_id || ""}
+                    disabled={isUpdating}
+                    onChange={(e) => handleAsesorChange(row.id, e.target.value)}
+                  >
+                    <option value="" disabled>{!info.getValue() ? "Asignar..." : "Cambiar..."}</option>
+                    {asesores.map(a => (
+                      <option key={a.id} value={a.id}>{a.nombre}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-1 flex items-center pointer-events-none">
+                    <ChevronDownIcon className="w-3 h-3 text-muted-foreground" />
+                  </div>
+                  {isUpdating && (
+                    <div className="absolute inset-0 bg-white/50 dark:bg-black/20 flex items-center justify-center rounded">
+                      <ArrowPathIcon className="w-3 h-3 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <span className={`text-sm truncate max-w-[150px] ${!info.getValue() ? 'text-red-500 italic font-medium' : ''}`}>
+                  {currentAsesorName}
+                </span>
+              )}
+            </div>
+          );
+        },
         size: 180,
       }),
       columnHelper.accessor("fecha_actualizado", {
