@@ -34,10 +34,11 @@ export async function getAplicacionesDesglose(poliza = null, limit = 50) {
        b.id as bitacora_id,
        b.tipo as bitacora_tipo,
        b.emisor as bitacora_emisor,
-       ase.nombre as asesor_nombre
+       COALESCE(ase_bit.nombre, ase_dir.nombre) as asesor_nombre
      FROM aplicaciones a
      LEFT JOIN bitacora b ON a.refid = b.id
-     LEFT JOIN asesor ase ON b.asesor = ase.id
+     LEFT JOIN asesor ase_bit ON b.asesor = ase_bit.id
+     LEFT JOIN asesor ase_dir ON a.asesor_id = ase_dir.id
      ${whereClause}
      ORDER BY a.fecha_actualizado DESC
      LIMIT $${params.length}`,
