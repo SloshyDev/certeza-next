@@ -7,6 +7,7 @@ import {
 } from "@/lib/roles";
 import { auth } from "@/../auth";
 import AddBitacoraButton from "@/components/AddBitacoraButton";
+import ManualBitacoraButton from "@/components/ManualBitacoraButton";
 import ExportBitacoraButton from "@/components/ExportBitacoraButton";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -54,7 +55,10 @@ export default async function Page(props) {
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center justify-between md:justify-start gap-4 w-full md:w-auto">
           <h1 className="text-2xl font-bold text-foreground">Bitácora</h1>
-          {canCreate ? <AddBitacoraButton /> : null}
+          <div className="flex items-center gap-2">
+            {canCreate ? <AddBitacoraButton /> : null}
+            <ManualBitacoraButton />
+          </div>
         </div>
         <form
           className="flex flex-col sm:flex-row gap-3 w-full md:w-auto"

@@ -7,6 +7,7 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import BitacoraTable from "@/components/tables/BitacoraTable";
+import ManualBitacoraModal from "@/components/ManualBitacoraModal";
 
 const TIPO_OPTIONS = [
   "EMISION",
@@ -30,6 +31,7 @@ export default function BitacoraGroupedView({
   const [rows, setRows] = useState(Array.isArray(data) ? data : []);
   const [extra, setExtra] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [asesores, setAsesores] = useState([]);
   const [emisores, setEmisores] = useState([]);
   const [form, setForm] = useState({
@@ -73,6 +75,20 @@ export default function BitacoraGroupedView({
       }
     };
   }, [canCreate]);
+
+  useEffect(() => {
+    function handleOpenManual() {
+      setShowManual(true);
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("open-manual-bitacora", handleOpenManual);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("open-manual-bitacora", handleOpenManual);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     fetch("/api/asesores")
@@ -810,6 +826,10 @@ export default function BitacoraGroupedView({
           </p>
         ) : null}
       </div>
+      <ManualBitacoraModal 
+        isOpen={showManual} 
+        onClose={() => setShowManual(false)} 
+      />
     </div>
   );
 }
