@@ -2,7 +2,7 @@
 
 import { 
   XMarkIcon, 
-  CompassIcon, 
+  MapIcon, 
   InformationCircleIcon, 
   ClipboardDocumentCheckIcon, 
   PencilSquareIcon, 
@@ -62,7 +62,7 @@ export default function ManualBitacoraModal({ isOpen, onClose }) {
           <section className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md">
             <div className="flex items-center gap-3 mb-6 border-b border-gray-50 pb-4">
               <div className="p-2 bg-blue-50 rounded-lg">
-                <CompassIcon className="h-6 w-6 text-blue-600" />
+                <MapIcon className="h-6 w-6 text-blue-600" />
               </div>
               <h3 className="text-lg font-bold text-gray-800">Acceso y Navegación</h3>
             </div>
